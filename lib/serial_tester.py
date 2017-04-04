@@ -13,10 +13,10 @@ if __name__ == '__main__':
     for i in devices:
         if 'cu.usbmodem' in i:
             print(i)
-            teensy = '/dev/' + i;
+            teensy = '/dev/' + i
 
-    sender = LightSender(serial_port = teensy);
-    effect = EffectManager();
+    sender = LightSender(serial_port = teensy)
+    effect = EffectManager()
 
     c = 0
     while(True):

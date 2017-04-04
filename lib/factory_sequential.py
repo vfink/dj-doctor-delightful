@@ -26,7 +26,7 @@ class ToolStack(object):
 
         self.sampler = self.sampler_class(self.pa_device_index, self.sample_rate)
         self.spectrum_analyzer = self.spectrum_analyzer_class(self.sampler.nsamples, self.sampler.rate)
-
+        
         self.renderer = self.renderer_class()
         self.vis_alg = self.vis_alg_class(self.renderer.nlights)
 

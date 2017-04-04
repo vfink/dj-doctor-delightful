@@ -97,11 +97,11 @@ def hex_to_rgb(hex_str):
 
 def dim_hex_color(hex_str, dim):
     rgb = hex_to_rgb(hex_str)
-    rgb[0] = rgb[0] * dim
-    rgb[1] = rgb[1] * dim
-    rgb[2] = rgb[2] * dim
+    r = int(rgb[0] * dim)
+    g = int(rgb[1] * dim)
+    b = int(rgb[2] * dim)
 
-    return rgb_to_hex(rgb)
+    return rgb_to_hex((r,g,b))
 
 def convex_poly_ramp(x, d=2):
     return -(x - 1) ** 2 + 1

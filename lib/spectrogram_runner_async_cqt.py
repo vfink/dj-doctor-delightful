@@ -9,10 +9,10 @@ if __name__ == '__main__':
 
     # Sampler params
     pa_device_index = None
-    # sample_rate = 44100 * 2
+    #sample_rate = 44100
     sample_rate = 22050
     nsamples = 4096 // 8
-    max_freq = 2000
+    max_freq = 6000
     nchunks = 1
 
     n_octaves = 7
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     spectrum_analyzer = CQT(sampler.nsamples * nchunks, sampler.rate, n_octaves)
 
     app = QtGui.QApplication([])
-    spectrogram_widget = SpectrogramWidget((n_frames, n_bins))
+    spectrogram_widget = SpectrogramWidget((n_frames, n_bins), spectrum_analyzer)
     spectrogram_widget.read_collected.connect(spectrogram_widget.update)
 
     sampler.signal = spectrogram_widget.read_collected

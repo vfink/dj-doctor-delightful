@@ -3,7 +3,7 @@ from renderers.pyqt.light_sim import QTLightSim
 from renderers.teensy.light_sender import LightSender
 from samplers.pyaudio_sampler import PyAudioSampler
 from spectrum_analyzers.spectrum_analyzers import WindowedSTFT
-from vis_algs.smooth_visualizer import Visualizer
+from vis_algs.effect_based import Visualizer
 
 
 if __name__ == '__main__':

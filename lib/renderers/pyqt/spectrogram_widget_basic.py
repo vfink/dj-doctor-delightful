@@ -12,7 +12,7 @@ class SpectrogramWidget(pg.PlotWidget):
 
     read_collected = QtCore.pyqtSignal(np.ndarray)
 
-    def __init__(self, shape, autolevel_period=4):
+    def __init__(self, shape, spectrum_analyzer, autolevel_period=4):
         super(SpectrogramWidget, self).__init__()
 
         self.autolevel_period = autolevel_period
@@ -37,6 +37,12 @@ class SpectrogramWidget(pg.PlotWidget):
 
         self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.last_autolevel = 0
+
+        # Setup the correct scaling for y-axis
+        yscale = 20000 / self.img_array.shape[1]
+        self.img.scale(spectrum_analyzer.nsamples / spectrum_analyzer.sample_rate, yscale)
+
+        self.setLabel('left', 'Frequency', units='Hz')
 
         self.show()
 
