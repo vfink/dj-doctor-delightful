@@ -4,6 +4,7 @@ from spectrum_analyzers.spectrum_analyzers import WindowedSTFT
 from spectrum_analyzers.note_filter import NoteFilter
 from music_processors.bpm_detection import *
 
+
 from PyQt5 import QtGui
 from PyQt5.QtCore import QObject, pyqtSlot
 

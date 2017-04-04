@@ -12,6 +12,7 @@ import pyqtgraph as pg
 import utils
 
 import pyaudio
+import peakutils
 
 import matplotlib.pyplot as plt
 
@@ -33,8 +34,33 @@ class BPMDetector():
 
         self.nSamples = nsamples
         self.miniChunk = 128
-        self.effectiveNSamples = (nsamples*sampleMultiplier)/self.miniChunk
-        self.effectiveRate = sampleRate/self.miniChunk
+        self.sampleMultiplier = sampleMultiplier
+        self.effectiveNSamples = (nsamples*sampleMultiplier)//self.miniChunk
+        self.effectiveRate = sampleRate//self.miniChunk
+        self.sample_buffer = []
+
+        freqs = np.arange((self.effectiveNSamples // 2) + 1, dtype=np.int32) / (self.effectiveNSamples / self.effectiveRate)
+        bpm = list(freqs*60)
+        print("Minimum BPM: {0}".format(bpm[1]))
+        print("BPM Resolution: {0}".format(bpm[1]-bpm[0]))
+
+        first = 0
+        last = 0
+        for i in bpm:
+            if i > 75 and first == 0:
+                first = bpm.index(i)
+            if i > 250 and last == 0:
+                last = bpm.index(i)
+                break
+
+        self.bpm = bpm[first:last]
+        self.first = first
+        self.last = last
+
+        # self.k_list = []
+        # for i in self.bpm:
+        #     self.k_list.append(self.bpm_to_k(i))
+
 
     def update(self, sample):
         sampleEnergy = 0
@@ -145,6 +171,76 @@ class BPMDetector():
 
         return self.bigChunk
 
+    def detect_beat(self, inc_samples):
+        self.sample_buffer.append(inc_samples)
+        if len(self.sample_buffer) < self.sampleMultiplier:
+            return 120
+        else:
+            samples = []
+            for i in self.sample_buffer:
+                for j in i:
+                    samples.append(j)
+
+            self.sample_buffer.pop(0)
+
+        sample_rate = self.rate
+        miniChunk = self.miniChunk
+        nsamples = self.effectiveNSamples
+        miniSample = []
+        #miniChunk = 128
+        #win = np.hanning(nsamples//miniChunk)
+        win = np.hanning(self.effectiveNSamples)
+        output = []
+        for i in range(0, len(samples)):
+            if len(miniSample) == miniChunk:
+                diff = self.differences(miniSample)
+                n = self.norm(diff)
+                output.append(n)
+                miniSample = [samples[i]]
+            else:
+                miniSample.append(samples[i])
+
+        if len(miniSample) == miniChunk:
+            diff = self.differences(miniSample)
+            n = self.norm(diff)
+            output.append(n)
+
+        # print('nsamples:{0}\nchunksize:{1}\n {0} // {1} = {2}'.format(
+        #     nsamples, miniChunk, nsamples // miniChunk))
+        #
+        # print('len(output){0}'.format(len(output)))
+
+
+        spec = abs(np.fft.rfft(output * win) / nsamples)
+
+
+        # sample_input = output * win
+        # spec = []
+        # for i in self.k_list:
+        #     spec.append(self.single_fft(sample_input, i))
+
+        b = list(spec)
+        b = b[self.first:self.last]
+
+        subpeaks = peakutils.indexes(np.asarray(b), thres=.7, min_dist=1)
+        tempo = self.bpm[b.index(max(b))]
+        for i in subpeaks:
+            print("BPM: {0}, Powah: {1}".format(self.bpm[i], b[i]))
+
+        return tempo
+
+    def single_fft(self, samples, k):
+        n = 0
+        X = 0
+        for x_n in samples:
+            X = X + (x_n * np.exp((-1j*2*np.pi*k*n)/self.effectiveNSamples))
+            n = n + 1
+
+        return abs(X/self.effectiveNSamples)
+
+    def bpm_to_k(self, bpm):
+        freq = 1.0/(bpm/60.0)
+        return int(freq*self.effectiveNSamples/self.effectiveRate)
 
 
 
@@ -246,7 +342,7 @@ class BPMWidgetAsync(pg.PlotWidget):
 
         bpm = bpm[first:last]
         b = b[first:last]
-        
+
         tempo = bpm[b.index(max(b))]
         print(tempo)
 

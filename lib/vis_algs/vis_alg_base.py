@@ -30,3 +30,6 @@ class VisualizationAlgorithm(VisualizationAlgorithmABC):
     def log_time(self):
         t = time.clock()
         self.times.append(t)
+
+    def cur_time(self):
+        return time.clock()

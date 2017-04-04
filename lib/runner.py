@@ -4,12 +4,13 @@ from renderers.teensy.light_sender import LightSender
 from samplers.pyaudio_sampler import PyAudioSampler
 from spectrum_analyzers.spectrum_analyzers import WindowedSTFT
 from vis_algs.effect_based import Visualizer
-
+from music_processors.bpm_detection import BPMDetector
 
 if __name__ == '__main__':
     app = ToolStack(
             PyAudioSampler,                     # Audio sampler
             WindowedSTFT,						# Spectrum analyzer
             Visualizer,   						# Visualization algorithm
-            QTLightSim)                         # Light simulator / Light serial sender
+            QTLightSim,
+            BPMDetector)                         # Light simulator / Light serial sender
     app.start()

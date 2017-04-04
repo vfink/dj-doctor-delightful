@@ -14,10 +14,10 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         super(Visualizer, self).__init__(nlights)
         self.effect_manager = EffectManager(nlights)
         self.snake = snake(color = utils.hsv_to_hex(0, 1, 1), nlights = nlights)
+        self.log_time()
 
     def freq_to_hex(self, freq):
 
-        self.log_time()
         self.effect_manager.colorSections([0], utils.hsv_to_hex(0, 1, freq[20]))
         self.effect_manager.colorSections([1], utils.hsv_to_hex(.2, 1, freq[100]))
         self.effect_manager.colorSections([2], utils.hsv_to_hex(.3, 1, freq[200]))
@@ -26,8 +26,11 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         self.effect_manager.colorSections([5], utils.hsv_to_hex(.6, 1, freq[500]))
         self.effect_manager.colorSections([6], utils.hsv_to_hex(.7, 1, freq[600]))
         self.effect_manager.colorSections([7], utils.hsv_to_hex(.8, 1, freq[700]))
-        r = rd.randint(0,100)
-        #self.effect_manager.strobeSection([r])
+
+        if self.cur_time() - self.times[-1] >= self.period*4:
+            self.effect_manager.strobeSection([0, 2, 4, 6])
+            self.log_time()
+            print(self.bpm)
 
         tmp_dict = self.effect_manager.get_light_Dict()
 
@@ -50,6 +53,10 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
             final_hex_vals.append(tmp_dict[i])
 
         return final_hex_vals
+
+    def update_bpm(self, bpm):
+        self.bpm = bpm
+        self.period = 1/(bpm/60)
 
 class EffectManager(object):
 
