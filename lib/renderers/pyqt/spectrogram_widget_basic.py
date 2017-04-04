@@ -4,7 +4,7 @@ import utils
 import numpy as np
 import pyqtgraph as pg
 import pyaudio
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui
 
 import matplotlib.pyplot as plt
 
@@ -64,5 +64,3 @@ class SpectrogramWidget(pg.PlotWidget):
 
         self.img.setImage(self.img_array, autoLevels=False)
         self.periodic_set_levels()
-
-
