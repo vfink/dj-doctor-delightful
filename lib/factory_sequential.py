@@ -32,7 +32,7 @@ class ToolStack(object):
         self.renderer = self.renderer_class()
         self.vis_alg = self.vis_alg_class(self.renderer.nlights)
 
-        self.bpm_detector = self.bpm_detection_class(self.sampler.rate, self.sampler.nsamples, 100)
+        self.bpm_detector = self.bpm_detection_class(self.sampler.rate, self.sampler.nsamples, 500)
 
 
         def get_hex_arr():

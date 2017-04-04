@@ -13,6 +13,7 @@ import utils
 
 import pyaudio
 import peakutils
+import time
 
 import matplotlib.pyplot as plt
 
@@ -41,8 +42,7 @@ class BPMDetector():
 
         freqs = np.arange((self.effectiveNSamples // 2) + 1, dtype=np.int32) / (self.effectiveNSamples / self.effectiveRate)
         bpm = list(freqs*60)
-        print("Minimum BPM: {0}".format(bpm[1]))
-        print("BPM Resolution: {0}".format(bpm[1]-bpm[0]))
+        print("BPM Resolution: {0}".format(bpm[1]))
 
         first = 0
         last = 0
@@ -54,8 +54,11 @@ class BPMDetector():
                 break
 
         self.bpm = bpm[first:last]
+        print("#BPMs: {0}".format(len(self.bpm)))
         self.first = first
         self.last = last
+
+        self.tempo = 120
 
         # self.k_list = []
         # for i in self.bpm:
@@ -172,17 +175,20 @@ class BPMDetector():
         return self.bigChunk
 
     def detect_beat(self, inc_samples):
-        self.sample_buffer.append(inc_samples)
-        if len(self.sample_buffer) < self.sampleMultiplier:
+        # START = time.clock()
+        chunked_samples = np.split(np.asarray(inc_samples), len(inc_samples)/self.miniChunk)
+        for i in chunked_samples:
+            diff = np.diff(i)
+            n = self.norm(diff)
+            self.sample_buffer.append(n)
+
+        #self.sample_buffer.append(inc_samples)
+        if len(self.sample_buffer) <= self.effectiveNSamples:
             return 120
         else:
-            samples = []
-            for i in self.sample_buffer:
-                for j in i:
-                    samples.append(j)
+            del self.sample_buffer[0:self.nSamples//self.miniChunk]
 
-            self.sample_buffer.pop(0)
-
+        # print("diffs: {0}".format(time.clock()-START))
         sample_rate = self.rate
         miniChunk = self.miniChunk
         nsamples = self.effectiveNSamples
@@ -190,29 +196,33 @@ class BPMDetector():
         #miniChunk = 128
         #win = np.hanning(nsamples//miniChunk)
         win = np.hanning(self.effectiveNSamples)
-        output = []
-        for i in range(0, len(samples)):
-            if len(miniSample) == miniChunk:
-                diff = self.differences(miniSample)
-                n = self.norm(diff)
-                output.append(n)
-                miniSample = [samples[i]]
-            else:
-                miniSample.append(samples[i])
-
-        if len(miniSample) == miniChunk:
-            diff = self.differences(miniSample)
-            n = self.norm(diff)
-            output.append(n)
+        #output = []
+        START = time.clock()
+        # for i in range(0, len(samples)):
+        #     if len(miniSample) == miniChunk:
+        #         #diff = self.differences(miniSample)
+        #         diff = np.diff(miniSample)
+        #         n = self.norm(diff)
+        #         output.append(n)
+        #         miniSample = [samples[i]]
+        #     else:
+        #         miniSample.append(samples[i])
+        #
+        # if len(miniSample) == miniChunk:
+        #     #diff = self.differences(miniSample)
+        #     diff = np.diff(miniSample)
+        #     n = self.norm(diff)
+        #     output.append(n)
 
         # print('nsamples:{0}\nchunksize:{1}\n {0} // {1} = {2}'.format(
         #     nsamples, miniChunk, nsamples // miniChunk))
         #
         # print('len(output){0}'.format(len(output)))
 
-
-        spec = abs(np.fft.rfft(output * win) / nsamples)
-
+        # START = time.clock()
+        spec = abs(np.fft.rfft(self.sample_buffer * win) / self.effectiveNSamples)
+        # print("fft: {0}".format(time.clock()-START))
+        #spec = output
 
         # sample_input = output * win
         # spec = []
@@ -222,10 +232,61 @@ class BPMDetector():
         b = list(spec)
         b = b[self.first:self.last]
 
-        subpeaks = peakutils.indexes(np.asarray(b), thres=.7, min_dist=1)
-        tempo = self.bpm[b.index(max(b))]
+        # blep = zip(self.bpm, b)
+        #
+        # blep = sorted(blep, key=lambda tup: tup[1])
+        # print("#1#")
+        # count = 0
+        # for i in blep:
+        #     print("BPM: {0}, Powah: {1}".format(int(i[0]), i[1]))
+        #     count = count+1
+        # print("###")
+        #
+        # subpeaks = peakutils.indexes(np.asarray(b), thres=.6, min_dist=2)
+        # for i in subpeaks:
+        #     print(self.bpm[i])
+        #
+        # top_bpm = []
+        # top_b = []
+        # for i in subpeaks:
+        #     top_bpm.append(self.bpm[i])
+        #     top_b.append(b[i])
+        #
+        # avg_tempo = np.average(top_bpm, weights=top_b)
+        #
+        # for i in range(len(b)):
+        #     far_from_calc = abs(self.tempo-self.bpm[i])/250.0
+        #     far_from_120 = abs(120-self.bpm[i])/250.0
+        #     far_from_instant = abs(avg_tempo-self.bpm[i])/1000.0
+        #     b[i] = b[i] * (1 - far_from_calc - far_from_120 - far_from_instant)
+
+
+        subpeaks = peakutils.indexes(np.asarray(b), thres=.6, min_dist=2)
         for i in subpeaks:
-            print("BPM: {0}, Powah: {1}".format(self.bpm[i], b[i]))
+            print(self.bpm[i])
+
+        top_bpm = []
+        top_b = []
+        for i in subpeaks:
+            top_bpm.append(self.bpm[i])
+            top_b.append(b[i])
+
+        #avg_tempo = np.average(top_bpm, weights=top_b)
+        #print(avg_tempo)
+
+        tempo = self.bpm[b.index(max(b))]
+
+        blep = zip(self.bpm, b)
+
+        # blep = sorted(blep, key=lambda tup: tup[1])
+        # print("#2#")
+        # count = 0
+        # for i in blep:
+        #     print("BPM: {0}, Powah: {1}".format(int(i[0]), i[1]))
+        #     count = count+1
+        # print("###")
+
+        self.tempo = tempo
 
         return tempo
 

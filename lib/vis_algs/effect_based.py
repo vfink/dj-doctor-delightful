@@ -30,7 +30,7 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         if self.cur_time() - self.times[-1] >= self.period*4:
             self.effect_manager.strobeSection([0, 2, 4, 6])
             self.log_time()
-            print(self.bpm)
+            print("BPM: {0}".format(self.bpm))
 
         tmp_dict = self.effect_manager.get_light_Dict()
 
