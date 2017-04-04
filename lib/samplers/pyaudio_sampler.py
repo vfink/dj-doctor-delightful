@@ -103,7 +103,7 @@ class PyAudioSampler(SamplerABC):
             print('Guessing a valid microphone device/rate...')
             self.device = self.valid_input_devices()[0]
             self.rate = self.valid_low_rate(self.device)
-        
+
         msg = 'Using device: {0}\n'.format(self.device)
         msg += 'Recording from "%s" ' % self.info["name"]
         msg += '(device %d) ' % self.device
@@ -122,10 +122,11 @@ class PyAudioSampler(SamplerABC):
 
     def read_chunk(self):
         return np.fromstring(
-                self.stream.read(self.nsamples), dtype=np.int16)
+                self.stream.read(self.nsamples, exception_on_overflow = False), dtype=np.int16)
+
+    
 
     def start(self):
-
         print(' -- Starting stream -- ')
         self.stream = self.p.open(format=pyaudio.paInt16, channels=1,
                 rate=self.rate, input=True, frames_per_buffer=self.nsamples,

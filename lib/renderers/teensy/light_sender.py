@@ -35,6 +35,22 @@ class LightSender(object):
         self.serial.write(data)
         self.serial.flush()
 
+    def send_light_dict(self, light_dict):
+        for k,v in light_dict.items():
+            if v != None:
+                x = 'L'.encode()
+                self.serial.write(x)
+                output = []
+                i0 = k & 255 #low order bits
+                i1 = (k & 65280) >> 8 #high order bits
+                output.append(i0)
+                output.append(i1)
+                output.append(v[0])
+                output.append(v[1])
+                output.append(v[2])
+                self.serial.write(output)
+        self.serial.flush()
+
     def update(self):
         while True:
             self.fetch_rgb()

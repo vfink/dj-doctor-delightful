@@ -19,7 +19,7 @@ class PyAudioSamplerAsync(SamplerABC):
 
         self.p = pyaudio.PyAudio()
         self.initiate()
-        # self.start()
+        #self.start()
 
     def max_fps(self):
         return self.rate / self.nsamples
@@ -106,7 +106,7 @@ class PyAudioSamplerAsync(SamplerABC):
             print('Guessing a valid microphone device/rate...')
             self.device = self.valid_input_devices()[0]
             self.rate = self.valid_low_rate(self.device)
-        
+
         msg = 'Using device: {0}\n'.format(self.device)
         msg += 'Recording from "%s" ' % self.info["name"]
         msg += '(device %d) ' % self.device
