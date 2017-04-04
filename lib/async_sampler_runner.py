@@ -3,21 +3,23 @@ import wave
 from samplers.pyaudio_sampler_async import PyAudioSamplerAsync
 
 import numpy as np
-from PyQt4 import QtGui
+from PyQt5 import QtGui
+from PyQt5.QtCore import QObject, pyqtSignal
 
 WAVE_OUTPUT_FILENAME = 'test_circular_buffer_recording.wav'
 CHANNELS = 1
 
 if __name__ == '__main__':
-    
+
     # Sampler params
     pa_device_index = None
     sample_rate = 44100 * 2
     nsamples = 4096 * 2
     max_freq = 2000
+    read_signal = QtCore.pyqtSignal()
 
     # Instantiate sampler and spectrum analyzer
-    sampler = PyAudioSamplerAsync(pa_device_index, sample_rate, nsamples)
+    sampler = PyAudioSamplerAsync(pa_device_index, sample_rate, nsamples, read_signal)
 
     prev_i = -1
     record_length = 10 # seconds
@@ -34,7 +36,7 @@ if __name__ == '__main__':
 
             if buffer_idx == 4:
                 print('recording')
-                recorded_data[i * buffer_len:(i+1) * buffer_len] = sampler.buffer.unwind()
+                recorded_data[i * buffer_len:(i+1) * buffer_len] = sampler.read()
                 i += 1
 
     waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb')

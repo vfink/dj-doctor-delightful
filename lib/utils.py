@@ -80,17 +80,38 @@ def hsv_to_hex(h, s, v):
     hexval = "#" + val_to_hex_str(R) + val_to_hex_str(G) + val_to_hex_str(B)
     return hexval
 
+def hsv_to_rgb(h,s,v):
+    (r, g, b) = colorsys.hsv_to_rgb(h, s, v)
+    (R, G, B) = int(255 * r), int(255 * g), int(255 * b)
+    return (R, G, B)
 
 def rgb_to_hex(rgb):
     return '#' + ''.join(map(val_to_hex_str, rgb))
 
 
 def hex_to_rgb(hex_str):
-    if len(hex_str) == 7:
+    if len(hex_str) >= 7:
         hex_str = hex_str[1:]
     r_str, g_str, b_str = hex_str[0:2], hex_str[2:4], hex_str[4:6]
     return (int(r_str, 16), int(g_str, 16), int(b_str, 16))
 
+def dim_hex_color(hex_str, dim):
+    rgb = hex_to_rgb(hex_str)
+    rgb[0] = rgb[0] * dim
+    rgb[1] = rgb[1] * dim
+    rgb[2] = rgb[2] * dim
+
+    return rgb_to_hex(rgb)
 
 def convex_poly_ramp(x, d=2):
     return -(x - 1) ** 2 + 1
+
+#generates an array of musical note frequencies in a range of MIDI numbers
+#defaults to a range from C1 to C7
+def gen_note_freqs(start=24, end=96):
+    notes =[]
+    for i in range(start, end+1):
+        note = 2**((i-69)/12) * 440
+        notes.append(note)
+
+    return notes

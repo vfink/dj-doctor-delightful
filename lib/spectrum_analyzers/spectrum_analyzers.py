@@ -12,12 +12,12 @@ class WindowedSTFT(SpectrumAnalyzerABC):
         self.sample_rate = sample_rate
         self.logscale = logscale
         self.freqs = np.arange((nsamples / 2) + 1, dtype=np.int32) / (nsamples / sample_rate)
-    
+
     def get_spectrum(self, x):
         # normalized, windowed frequencies in data chunk
         spec = np.fft.rfft(x * self.win) / self.nsamples
 
-        # get magnitude 
+        # get magnitude
         psd = abs(spec)
 
         # convert to dB scale

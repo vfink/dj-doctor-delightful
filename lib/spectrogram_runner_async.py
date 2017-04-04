@@ -2,11 +2,10 @@ from renderers.pyqt.spectrogram_widget_async import SpectrogramWidget
 from samplers.pyaudio_sampler_async import PyAudioSamplerAsync
 from spectrum_analyzers.spectrum_analyzers import WindowedSTFT
 
-from PyQt4 import QtGui
-
+from PyQt5 import QtGui
 
 if __name__ == '__main__':
-    
+
     # Sampler params
     pa_device_index = None
     sample_rate = 44100 * 2
@@ -33,6 +32,6 @@ if __name__ == '__main__':
     sampler.start()
 
     # Start the app
-    print('Entering blocking PyQt4 GUI')
+    print('Entering blocking PyQt5 GUI')
     app.exec_()
-    print('Exiting blocking PyQt4 GUI')
+    print('Exiting blocking PyQt5 GUI')

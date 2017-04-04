@@ -7,10 +7,10 @@ import utils
 
 import sys
 import numpy as np
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 
-class QTLightSim(QtGui.QWidget):
+class QTLightSim(QtWidgets.QWidget):
 
     fps_sample_window = 10
 
@@ -26,7 +26,9 @@ class QTLightSim(QtGui.QWidget):
         self.fps = 0
 
         super(QTLightSim, self).__init__()
-        self.initUI()
+        self.qp = QtGui.QPainter()
+        self.iter = 0
+        self.get_hex_arr = None
 
         self.locations = []
         for i in range(length):
@@ -39,10 +41,7 @@ class QTLightSim(QtGui.QWidget):
             self.locations.append((height - i, length - 1))
         self.nlights = len(self.locations)
 
-        self.qp = QtGui.QPainter()
-
-        self.iter = 0
-        self.get_hex_arr = None
+        self.initUI()
 
 
     def initUI(self):
