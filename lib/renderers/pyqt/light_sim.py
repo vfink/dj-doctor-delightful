@@ -14,7 +14,7 @@ class QTLightSim(QtWidgets.QWidget):
 
     fps_sample_window = 10
 
-    def __init__(self, height=420, length=220, stride=2, size=4):
+    def __init__(self, height=220, length=420, stride=2, size=3):
 
         self.app = QtGui.QApplication(sys.argv)
 
