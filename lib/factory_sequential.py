@@ -39,7 +39,7 @@ class ToolStack(object):
                 self.close()
                 raise
 
-
+        
         self.renderer.get_hex_arr = get_hex_arr
         self.renderer.start()
 

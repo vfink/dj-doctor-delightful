@@ -14,7 +14,7 @@ class QTLightSim(QtWidgets.QWidget):
 
     fps_sample_window = 10
 
-    def __init__(self, height=19, length=31, stride=32, size=30):
+    def __init__(self, height=420, length=220, stride=2, size=4):
 
         self.app = QtGui.QApplication(sys.argv)
 
@@ -28,7 +28,6 @@ class QTLightSim(QtWidgets.QWidget):
         super(QTLightSim, self).__init__()
         self.qp = QtGui.QPainter()
         self.iter = 0
-        self.get_hex_arr = None
 
         self.locations = []
         for i in range(length):
@@ -40,6 +39,11 @@ class QTLightSim(QtWidgets.QWidget):
         for i in range(height):
             self.locations.append((height - i, length - 1))
         self.nlights = len(self.locations)
+
+        def tmp_hex():
+            return ['#000000']*len(self.locations)
+
+        self.get_hex_arr = tmp_hex
 
         self.initUI()
 
