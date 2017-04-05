@@ -17,7 +17,7 @@ if __name__ == '__main__':
     # Sampler params
     pa_device_index = None
     sample_rate = 44100
-    sampleMultiplier = 200
+    sampleMultiplier = 400
     nsamples = 4096
     max_freq = 10000
 
@@ -26,37 +26,38 @@ if __name__ == '__main__':
 
     note_filt = NoteFilter(sampler.nsamples, sampler.rate)
 
-    # bpmDetector = BPMDetector(sampler.rate, sampler.nsamples, sampleMultiplier)
+    bpmDetector = BPMDetector(sampler.rate, sampler.nsamples, sampleMultiplier)
 
-    spectrum_analyzer = WindowedSTFT(sampler.nsamples, sampler.rate,
-            logscale=False)
+    # spectrum_analyzer = WindowedSTFT(sampler.nsamples, sampler.rate,
+    #         logscale=False)
     #
-    # spectrum_analyzer = WindowedSTFT(bpmDetector.effectiveNSamples,
-    #             bpmDetector.effectiveRate,logscale=True)
+    spectrum_analyzer = WindowedSTFT(bpmDetector.effectiveNSamples,
+                bpmDetector.effectiveRate,logscale=True)
 
     app = QtGui.QApplication([])
-    spectrogram_widget = SpectrogramWidget(spectrum_analyzer, max_freq)
+    # spectrogram_widget = SpectrogramWidget(spectrum_analyzer, max_freq)
 
 #Spectrogram
     # Add spectrum getter function to the widget
-    def get_spectrum():
-        # return spectrum_analyzer.get_spectrum(sampler.read_chunk())
-        return note_filt.enhance_notes(spectrum_analyzer.get_spectrum(sampler.read_chunk()))
+    # def get_spectrum():
+    #     # return spectrum_analyzer.get_spectrum(sampler.read_chunk())
+    #     return note_filt.enhance_notes(spectrum_analyzer.get_spectrum(sampler.read_chunk()))
+    #
+    # spectrogram_widget.note_filt = note_filt
+    # spectrogram_widget.get_spectrum = get_spectrum
 
-    spectrogram_widget.note_filt = note_filt
-    spectrogram_widget.get_spectrum = get_spectrum
-
-    #bpm_widget = BPMWidget(spectrum_analyzer)
+    bpm_widget = BPMWidget(spectrum_analyzer, bpmDetector)
 
 #Spectrogram BPM with FFT
-    # def get_spectrum():
-    #     s = []
-    #     for i in range(0, sampleMultiplier):
-    #         s = s + list(sampler.read_chunk())
-    #     return spectrum_analyzer.get_spectrum(bpmDetector.updateFFTBPM(s))
-    #     #return spectrum_analyzer.get_spectrum(bpmDetector.updateFFTBPM(bpmDetector.consolidate(10, sampler)))
-    # #spectrogram_widget.get_spectrum = get_spectrum
-    # bpm_widget.get_spectrum = get_spectrum
+    def get_spectrum():
+        # s = []
+        # for i in range(0, sampleMultiplier):
+        #     s = s + list(sampler.read_chunk())
+        # return spectrum_analyzer.get_spectrum(bpmDetector.updateFFTBPM(s))
+        return bpmDetector.detect_beat(sampler.read_chunk())
+        #return spectrum_analyzer.get_spectrum(bpmDetector.updateFFTBPM(bpmDetector.consolidate(10, sampler)))
+    # spectrogram_widget.get_spectrum = get_spectrum
+    bpm_widget.get_spectrum = get_spectrum
 
     #while(True):
         #beat = bpmDetector.update(sampler.read_chunk())
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     #
     # bpmDetector.setBigChunk(s)
 
-    spectrogram_widget.update()
+    # spectrogram_widget.update()
 
     def async_stream_read(q, event, sampler, sampleMultiplier):
         while event.is_set():
@@ -115,7 +116,7 @@ if __name__ == '__main__':
     #         s = s + list(sampler.read_chunk())
     #         sCount = sCount + 1
 
-    # bpm_widget.update()
+    bpm_widget.update()
 
     # Start the app
     print('Entering blocking PyQt5 GUI')

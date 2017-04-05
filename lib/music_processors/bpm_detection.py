@@ -34,7 +34,7 @@ class BPMDetector():
         self.tempoSampleCount = 0
 
         self.nSamples = nsamples
-        self.miniChunk = 128
+        self.miniChunk = 256
         self.sampleMultiplier = sampleMultiplier
         self.effectiveNSamples = (nsamples*sampleMultiplier)//self.miniChunk
         self.effectiveRate = sampleRate//self.miniChunk
@@ -47,9 +47,9 @@ class BPMDetector():
         first = 0
         last = 0
         for i in bpm:
-            if i > 75 and first == 0:
+            if i > 80 and first == 0:
                 first = bpm.index(i)
-            if i > 250 and last == 0:
+            if i > 160 and last == 0:
                 last = bpm.index(i)
                 break
 
@@ -184,7 +184,7 @@ class BPMDetector():
 
         #self.sample_buffer.append(inc_samples)
         if len(self.sample_buffer) <= self.effectiveNSamples:
-            return 120
+            return [0]*len(self.bpm)
         else:
             del self.sample_buffer[0:self.nSamples//self.miniChunk]
 
@@ -242,28 +242,10 @@ class BPMDetector():
         #     count = count+1
         # print("###")
         #
-        # subpeaks = peakutils.indexes(np.asarray(b), thres=.6, min_dist=2)
-        # for i in subpeaks:
-        #     print(self.bpm[i])
-        #
-        # top_bpm = []
-        # top_b = []
-        # for i in subpeaks:
-        #     top_bpm.append(self.bpm[i])
-        #     top_b.append(b[i])
-        #
-        # avg_tempo = np.average(top_bpm, weights=top_b)
-        #
-        # for i in range(len(b)):
-        #     far_from_calc = abs(self.tempo-self.bpm[i])/250.0
-        #     far_from_120 = abs(120-self.bpm[i])/250.0
-        #     far_from_instant = abs(avg_tempo-self.bpm[i])/1000.0
-        #     b[i] = b[i] * (1 - far_from_calc - far_from_120 - far_from_instant)
-
 
         subpeaks = peakutils.indexes(np.asarray(b), thres=.6, min_dist=2)
-        for i in subpeaks:
-            print(self.bpm[i])
+        # for i in subpeaks:
+        #     print(self.bpm[i])
 
         top_bpm = []
         top_b = []
@@ -271,14 +253,39 @@ class BPMDetector():
             top_bpm.append(self.bpm[i])
             top_b.append(b[i])
 
-        #avg_tempo = np.average(top_bpm, weights=top_b)
-        #print(avg_tempo)
+        if sum(top_b) != 0:
+            avg_tempo = np.average(top_bpm, weights=top_b)
+        else:
+            avg_tempo = self.tempo
+
+        for i in range(len(b)):
+            far_from_calc = abs(self.tempo-self.bpm[i])/250.0
+            far_from_120 = abs(120-self.bpm[i])/250.0
+            far_from_instant = abs(avg_tempo-self.bpm[i])/1000.0
+            b[i] = b[i] * (1 - far_from_calc - far_from_120 - far_from_instant)
+
+
+        # subpeaks = peakutils.indexes(np.asarray(b), thres=.6, min_dist=2)
+        # print("###")
+        # for i in subpeaks:
+        #     print(self.bpm[i])
+        #
+        # print("###")
+
+        # top_bpm = []
+        # top_b = []
+        # for i in subpeaks:
+        #     top_bpm.append(self.bpm[i])
+        #     top_b.append(b[i])
+        #
+        # avg_tempo = np.average(top_bpm, weights=top_b)
+        # print("Avg Tempo: {0}".format(avg_tempo))
 
         tempo = self.bpm[b.index(max(b))]
 
         blep = zip(self.bpm, b)
 
-        # blep = sorted(blep, key=lambda tup: tup[1])
+        blep = sorted(blep, key=lambda tup: tup[1])
         # print("#2#")
         # count = 0
         # for i in blep:
@@ -288,7 +295,7 @@ class BPMDetector():
 
         self.tempo = tempo
 
-        return tempo
+        return b
 
     def single_fft(self, samples, k):
         n = 0
@@ -308,7 +315,7 @@ class BPMDetector():
 
 class BPMWidget(pg.PlotWidget):
 
-    def __init__(self, spectrum_analyzer,):
+    def __init__(self, spectrum_analyzer, BPMDetector):
         super(BPMWidget, self).__init__()
 
         self.audioX = [0]
@@ -317,7 +324,7 @@ class BPMWidget(pg.PlotWidget):
         # Get chunk size and sample rate from spectrum analyzer
         self.nsamples = spectrum_analyzer.nsamples
         sample_rate = spectrum_analyzer.sample_rate
-        self.bpm = spectrum_analyzer.get_freqs()*60
+        self.bpm = BPMDetector.bpm
         #audioPlot = self.plotItem.plot(x=self.bpm, y=self.bpm)
 
         self.graph = self.plot(x=self.bpm, y=self.bpm)

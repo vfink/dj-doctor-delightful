@@ -6,26 +6,46 @@ from vis_algs import vis_alg_base
 import random as rd
 from music_processors.bpm_detection import BPMDetector
 
+import peakutils
 
 
 class Visualizer(vis_alg_base.VisualizationAlgorithm):
 
-    def __init__(self, nlights):
+    def __init__(self, nlights, freqs):
         super(Visualizer, self).__init__(nlights)
         self.effect_manager = EffectManager(nlights)
         self.snake = snake(color = utils.hsv_to_hex(0, 1, 1), nlights = nlights)
         self.log_time()
+        self.freq_buffer_len = 100
+        self.freq_buffer = np.zeros([self.freq_buffer_len, 2049])
+        self.freq_vals = freqs
 
     def freq_to_hex(self, freq):
+        self.freq_buffer = np.roll(self.freq_buffer, 1, axis=0)
+        self.freq_buffer[0] = np.reshape(freq, (1,2049))
 
-        self.effect_manager.colorSections([0], utils.hsv_to_hex(0, 1, freq[20]))
-        self.effect_manager.colorSections([1], utils.hsv_to_hex(.2, 1, freq[100]))
-        self.effect_manager.colorSections([2], utils.hsv_to_hex(.3, 1, freq[200]))
-        self.effect_manager.colorSections([3], utils.hsv_to_hex(.4, 1, freq[300]))
-        self.effect_manager.colorSections([4], utils.hsv_to_hex(.5, 1, freq[400]))
-        self.effect_manager.colorSections([5], utils.hsv_to_hex(.6, 1, freq[500]))
-        self.effect_manager.colorSections([6], utils.hsv_to_hex(.7, 1, freq[600]))
-        self.effect_manager.colorSections([7], utils.hsv_to_hex(.8, 1, freq[700]))
+        freq_avg = np.average(self.freq_buffer, axis=0)
+        freq_avg_val = zip(freq_avg, self.freq_vals, freq)
+        freq_avg_val = sorted(freq_avg_val, key=lambda tup: tup[0], reverse=True)
+
+        subpeaks = peakutils.indexes(freq_avg, thres=.1, min_dist=30)
+
+        ind = 0
+        x = np.zeros(len(subpeaks))
+        for i in subpeaks:
+            print("peak at {0}Hz".format(self.freq_vals[i]))
+            if freq_avg[i]*1.25 < freq[i]:
+                x[ind] = 1
+            ind = ind + 1
+
+        self.effect_manager.colorSections([0], utils.hsv_to_hex(0, 1, x[0]))
+        self.effect_manager.colorSections([1], utils.hsv_to_hex(.2, 1, x[0]))
+        self.effect_manager.colorSections([2], utils.hsv_to_hex(.3, 1, x[len(x)//3]))
+        self.effect_manager.colorSections([3], utils.hsv_to_hex(.4, 1, x[len(x)//3]))
+        self.effect_manager.colorSections([4], utils.hsv_to_hex(.5, 1, x[2*len(x)//3]))
+        self.effect_manager.colorSections([5], utils.hsv_to_hex(.6, 1, x[2*len(x)//3]))
+        self.effect_manager.colorSections([6], utils.hsv_to_hex(.7, 1, x[len(x)-1]))
+        self.effect_manager.colorSections([7], utils.hsv_to_hex(.8, 1, x[len(x)-1]))
 
         if self.cur_time() - self.times[-1] >= self.period*4:
             self.effect_manager.strobeSection([0, 2, 4, 6])
