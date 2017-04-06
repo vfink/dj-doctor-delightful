@@ -4,7 +4,7 @@ import pyaudio
 import time
 import numpy as np
 
-MONITOR_PATTERN = 'monitor'
+MONITOR_PATTERN = 'Soundflower (2ch)'
 
 
 class PyAudioSampler(SamplerABC):
@@ -124,7 +124,7 @@ class PyAudioSampler(SamplerABC):
         return np.fromstring(
                 self.stream.read(self.nsamples, exception_on_overflow = False), dtype=np.int16)
 
-    
+
 
     def start(self):
         print(' -- Starting stream -- ')
