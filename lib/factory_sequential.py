@@ -30,7 +30,7 @@ class ToolStack(object):
         self.spectrum_analyzer = self.spectrum_analyzer_class(self.sampler.nsamples, self.sampler.rate)
 
         self.renderer = self.renderer_class()
-        self.vis_alg = self.vis_alg_class(self.renderer.nlights, self.spectrum_analyzer.get_freqs())
+        self.vis_alg = self.vis_alg_class(self.renderer.nlights, self.spectrum_analyzer)
 
         self.bpm_detector = self.bpm_detection_class(self.sampler.rate, self.sampler.nsamples, 500)
 

@@ -59,6 +59,3 @@ class CQT(SpectrumAnalyzerABC):
 
     def get_freqs(self):
         assert False
-
-
-

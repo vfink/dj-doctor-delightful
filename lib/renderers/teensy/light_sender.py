@@ -1,7 +1,7 @@
 import serial
 from renderers.teensy import serial_constants
 import utils
-
+import os
 
 class LightSender(object):
 
@@ -10,8 +10,22 @@ class LightSender(object):
             nlights=serial_constants.TOTAL_LEDS):
 
         self.nlights = nlights
-        self.serial = serial.Serial(
-                serial_port, serial_constants.BAUD, timeout=1)
+
+        try:
+            self.serial = serial.Serial(
+                    serial_port, serial_constants.BAUD, timeout=1)
+        except serial.serialutil.SerialException:
+            devices = os.listdir('/dev')
+            teensy = 0
+            for i in devices:
+                if 'cu.usbmodem' in i:
+                    print(i)
+                    teensy = '/dev/' + i
+
+            serial_port = teensy
+            self.serial = serial.Serial(
+                    serial_port, serial_constants.BAUD, timeout=1)
+
         self.data = bytearray([0] * (self.nlights * 3))
 
     def strobe(self):
@@ -26,7 +40,7 @@ class LightSender(object):
             self.send_rgb(data.encode())
 
     def fetch_rgb(self):
-        hex_colors, freq_staleness = self.get_hex_arr()
+        hex_colors = self.get_hex_arr()
         for i, hex_color in enumerate(hex_colors):
             rgbtuple = utils.hex_to_rgb(hex_color)
             self.data[3 * i:3 * i + 3] = rgbtuple
@@ -55,3 +69,13 @@ class LightSender(object):
         while True:
             self.fetch_rgb()
             self.send_rgb(self.data)
+
+    def start(self):
+        if self.get_hex_arr is None:
+            raise Exception('Pls assign me a get_hex_arr func')
+
+        self.update()
+        self.app.exec_()
+
+    def close(self):
+        self.serial.close()
