@@ -90,11 +90,11 @@ class LineWidget(pg.PlotWidget):
         #graph arbitrary x and y
         # self.graph.setData(spectrum[0],spectrum[1])
 
-        self.graph.setData(spectrum[0], spectrum[1], pen=(0,2))
-        self.graph2.setData(spectrum[0], spectrum[2], pen=(1,2))
+        self.graph.setData(spectrum[0], spectrum[1], pen=(0,3))
+        self.graph2.setData(spectrum[0], spectrum[2], pen=(2,3))
 
         #graph two lines with same x
         # self.graph.setData(self.freqs,spectrum[0], pen=(0,2))
         # self.graph2.setData(self.freqs,spectrum[1], pen=(1,2))
 
-        QtCore.QTimer.singleShot(1, self.update)  # QUICKLY repeat
+        QtCore.QTimer.singleShot(1, self.update2)  # QUICKLY repeat

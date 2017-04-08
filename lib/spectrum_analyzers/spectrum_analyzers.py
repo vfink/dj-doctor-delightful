@@ -33,18 +33,20 @@ class WindowedSTFT(SpectrumAnalyzerABC):
 
 class CQT(SpectrumAnalyzerABC):
 
-    def __init__(self, nsamples, sample_rate, n_octaves=7 , bins_per_octave=12):
+    def __init__(self, nsamples, sample_rate, n_octaves=7 , bins_per_octave=24):
         self.nsamples = nsamples
         self.sample_rate = sample_rate
         self.n_octaves = n_octaves
         self.bins_per_octave = bins_per_octave
         self.n_bins = self.n_octaves * self.bins_per_octave
+        self.freqs = librosa.cqt_frequencies(n_bins=self.n_bins,
+                                            bins_per_octave=self.bins_per_octave,
+                                            fmin=librosa.note_to_hz('C1'))
         assert self.nsamples % (2 ** self.n_octaves) == 0
 
     def get_spectrum(self, x):
-
-        print("len(x):", len(x))
-        print("nsamples:", self.nsamples)
+        # print("len(x):", len(x))
+        # print("nsamples:", self.nsamples)
 
         cqt = librosa.core.cqt(x.astype(float), self.sample_rate, hop_length=self.nsamples,
                 n_bins=self.n_bins, bins_per_octave=self.bins_per_octave)
@@ -52,10 +54,10 @@ class CQT(SpectrumAnalyzerABC):
 
         # get magnitude
         cqt = abs(cqt)
-
-        print('cqt.shape:', cqt.shape)
+        print(cqt)
+        # print('cqt.shape:', cqt.shape)
 
         return cqt[:,0]
 
     def get_freqs(self):
-        assert False
+        return self.freqs.copy()

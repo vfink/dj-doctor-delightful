@@ -32,6 +32,8 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
 
         self.l_buffer_len = self.sample_rate*3//self.nsamples
         self.l_buffer = np.zeros(self.l_buffer_len)
+        self.max_corr = 0
+        self.max_l = 0
 
         #self.s_buffer_len = self.sample_rate//(2*self.nsamples)
         #self.s_buffer = np.zeros(self.s_buffer_len)
@@ -43,17 +45,19 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
 
     def freq_to_hex2(self, freq):
         final_hex_vals = []
-        b = sorted(list(range(self.nlights)) + list(range(self.nlights)) + list(range(self.nlights)))
-        for i in range(self.nlights ):
-            final_hex_vals.append(utils.hsv_to_hex(freq[b[i]], 1, freq[b[i]]))
+        b = sorted(list(range(self.nlights)) + list(range(self.nlights)) + list(range(self.nlights))+ list(range(self.nlights)))
+        for i in range(self.nlights):
+
+            final_hex_vals.append(utils.hsv_to_hex(freq[b[i]]/5000, 1, freq[b[i]]/5000))
 
         return final_hex_vals
 
     def freq_to_hex(self, freq):
+        # print(freq)
         #FREQ AVG TESTING
         self.freq_buffer = np.roll(self.freq_buffer, -1, axis=0)
         self.freq_buffer[-1] = np.reshape(freq, (1,len(self.freq_vals)))
-        print(len(freq))
+
         freq_avg = np.average(self.freq_buffer, axis=0)
         freq_avg_val = zip(freq_avg, self.freq_vals, freq)
         freq_avg_val = sorted(freq_avg_val, key=lambda tup: tup[0], reverse=True)
@@ -64,24 +68,24 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
             base = 0
 
 
-        sub = peakutils.indexes(freq_avg[7:19], thres=.8, min_dist=2) + 14
-        low = peakutils.indexes(freq_avg[20:31], thres=.8, min_dist=2) + 20
-        mid = peakutils.indexes(freq_avg[32:130], thres=.5, min_dist=2) + 32
-        high = peakutils.indexes(freq_avg[200:1200], thres=.5, min_dist=2) + 200
-
-        # subpeaks = peakutils.indexes(freq_avg-base, thres=.8, min_dist=10)
-        #subpeaks = np.concatenate((sub,low,mid,high))
-        subpeaks = [self.get_highest_ind(sub, freq_avg, 7), self.get_highest_ind(low, freq_avg, 20), self.get_highest_ind(mid, freq_avg, 31), self.get_highest_ind(high, freq_avg, 200)]
-        for i in range(0, len(freq_avg)):
-            if freq[i] < freq_avg[i]:
-                freq[i] = 0
-            if i not in subpeaks:
-                 #freq_avg[i] = 0
-                freq[i] = 0
+        # sub = peakutils.indexes(freq_avg[7:19], thres=.8, min_dist=2) + 14
+        # low = peakutils.indexes(freq_avg[20:31], thres=.8, min_dist=2) + 20
+        # mid = peakutils.indexes(freq_avg[32:130], thres=.5, min_dist=2) + 32
+        # high = peakutils.indexes(freq_avg[200:1200], thres=.5, min_dist=2) + 200
+        #
+        # # subpeaks = peakutils.indexes(freq_avg-base, thres=.8, min_dist=10)
+        # #subpeaks = np.concatenate((sub,low,mid,high))
+        # subpeaks = [self.get_highest_ind(sub, freq_avg, 7), self.get_highest_ind(low, freq_avg, 20), self.get_highest_ind(mid, freq_avg, 31), self.get_highest_ind(high, freq_avg, 200)]
+        # for i in range(0, len(freq_avg)):
+        #     if freq[i] < freq_avg[i]:
+        #         freq[i] = 0
+        #     if i not in subpeaks:
+        #          #freq_avg[i] = 0
+        #         freq[i] = 0
 
         # f_diff = np.absolute(np.diff(np.vstack((freq_avg, freq)), axis = 0))
         #
-        #return (freq_avg/max(freq_avg), (freq)/max(freq))
+        # return (freq_avg/max(freq_avg), freq/max(freq))
         # return np.reshape(f_diff, (len(self.freq_vals),))
 
         #AUTO CORRELATION TESTING
@@ -101,10 +105,14 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         #CORRELATION TESTING
         # self.l_buffer = np.roll(self.l_buffer, -1, axis=0)
         # #self.l_buffer[-1] = self.s_buffer[0]
-        # self.l_buffer[-1] = freq[20]
+        # self.l_buffer[-1] = freq[20]**2
         #
         # # self.s_buffer = np.roll(self.s_buffer, -1, axis=0)
         # # self.s_buffer[-1] = freq[20]
+        #
+        # a = max(self.l_buffer)
+        # if self.max_l < a:
+        #      self.max_l = a
         #
         # corr = np.correlate(self.l_buffer, self.s_buffer, mode='same')
         #
@@ -132,7 +140,11 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         # min_corr_lag = sec_corr_lag/60
         # corr_lag = min_corr_lag * self.bpm
         #
-        # return (corr_lag, corr, self.l_buffer)
+        # a = max(corr)
+        # if self.max_corr < a:
+        #      self.max_corr = a
+        #
+        # return (corr_lag, corr/self.max_corr, self.l_buffer/self.max_l)
 
         # print('###')
         if len(subpeaks) > 0:
@@ -195,15 +207,15 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
 
     def update_s_buffer(self):
         samples_per_beat = int((1/(self.bpm/60)) * (self.sample_rate/self.nsamples))
-        a = np.ones(samples_per_beat//2)
-        b = np.zeros(samples_per_beat//2)
+        a = np.ones(samples_per_beat//4)
+        b = np.zeros(samples_per_beat//4)
         b1 = np.concatenate((b, a))
         b2 = np.concatenate((b, a*.5))
         b3 = np.concatenate((b, a*.75))
         b4 = np.concatenate((b, a*.5))
         self.s_buffer = np.concatenate((b4, b3, b2, b1))
-        # print(self.s_buffer)
-        # print(self.bpm)
+        print(self.s_buffer)
+        print(self.bpm)
 
     def update_bpm(self, bpm):
         self.last_bpm = self.bpm

@@ -5,6 +5,7 @@ import time
 import numpy as np
 
 MONITOR_PATTERN = 'Soundflower (2ch)'
+# MONITOR_PATTERN = 'MONITOR'
 
 
 class PyAudioSampler(SamplerABC):

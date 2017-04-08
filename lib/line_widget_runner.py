@@ -1,6 +1,6 @@
 from renderers.pyqt.line_widget import LineWidget
 from samplers.pyaudio_sampler import PyAudioSampler
-from spectrum_analyzers.spectrum_analyzers import WindowedSTFT
+from spectrum_analyzers.spectrum_analyzers import WindowedSTFT, CQT
 from spectrum_analyzers.note_filter import NoteFilter
 from music_processors.bpm_detection import *
 from vis_algs.effect_based import Visualizer
@@ -29,8 +29,9 @@ if __name__ == '__main__':
 
     bpm_detector = BPMDetector(sampler.rate, sampler.nsamples, sampleMultiplier)
 
-    spectrum_analyzer = WindowedSTFT(sampler.nsamples, sampler.rate,
-            logscale=False)
+    # spectrum_analyzer = WindowedSTFT(sampler.nsamples, sampler.rate,
+    #         logscale=False)
+    spectrum_analyzer = CQT(sampler.nsamples, sampler.rate)
 
     vis = Visualizer(1600, spectrum_analyzer)
 
