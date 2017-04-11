@@ -33,7 +33,7 @@ class WindowedSTFT(SpectrumAnalyzerABC):
 
 class CQT(SpectrumAnalyzerABC):
 
-    def __init__(self, nsamples, sample_rate, n_octaves=7 , bins_per_octave=24):
+    def __init__(self, nsamples, sample_rate, n_octaves=7, bins_per_octave=12):
         self.nsamples = nsamples
         self.sample_rate = sample_rate
         self.n_octaves = n_octaves

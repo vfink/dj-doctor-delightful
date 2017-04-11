@@ -85,7 +85,7 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
 
         # f_diff = np.absolute(np.diff(np.vstack((freq_avg, freq)), axis = 0))
         #
-        # return (freq_avg/max(freq_avg), freq/max(freq))
+        return (freq_avg/max(freq_avg), freq/max(freq))
         # return np.reshape(f_diff, (len(self.freq_vals),))
 
         #AUTO CORRELATION TESTING

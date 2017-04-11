@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     # spectrum_analyzer = WindowedSTFT(sampler.nsamples, sampler.rate,
     #         logscale=False)
-    spectrum_analyzer = CQT(sampler.nsamples, sampler.rate)
+    spectrum_analyzer = CQT(sampler.nsamples, sampler.rate, n_octaves=8, bins_per_octave=24)
 
     vis = Visualizer(1600, spectrum_analyzer)
 
