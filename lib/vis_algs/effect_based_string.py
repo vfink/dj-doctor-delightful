@@ -22,6 +22,9 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         self.freq_buffer_len = 100
         self.freq_buffer = np.zeros([self.freq_buffer_len, len(self.freq_vals)])
 
+        self.hex_vals = []
+        for i in range(self.nlights):
+            self.hex_vals.append(utils.hsv_to_hex(0, 1, 1))
 
         self.sample_rate = spectrum_analyzer.sample_rate
         self.nsamples = spectrum_analyzer.nsamples
@@ -39,7 +42,7 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         self.power_buffer_len = self.sample_rate*2//self.nsamples
         self.power_buffer = np.zeros(self.power_buffer_len)
 
-        self.current_algorithm = ALGORITHM_LIST[0](self.bpm, self.nlights)
+        self.current_algorithm = ALGORITHM_LIST[0](self.bpm, self.nlights, self.hex_vals)
         #self.s_buffer_len = self.sample_rate//(2*self.nsamples)
         #self.s_buffer = np.zeros(self.s_buffer_len)
 
@@ -79,10 +82,12 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
             base = 0
 
         if abs(power_avg-power) > power_avg*.2:
-            #self.current_algorithm = ALGORITHM_LIST[rd.randint(0, len(ALGORITHM_LIST)-1)](self.bpm, self.nlights)
-            self.current_algorithm = ALGORITHM_LIST[1](self.bpm, self.nlights)
-            print('new alg')
             final_hex_vals = self.current_algorithm.update()
+
+            if self.current_algorithm.done:
+                self.current_algorithm = ALGORITHM_LIST[rd.randint(0, len(ALGORITHM_LIST)-1)](self.bpm, self.nlights, self.hex_vals)
+                # self.current_algorithm = ALGORITHM_LIST[0](self.bpm, self.nlights, self.hex_vals)
+                print(type(self.current_algorithm))
         else:
             final_hex_vals = self.current_algorithm.update()
 
@@ -90,6 +95,7 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
             self.log_time()
             print("BPM: {0}".format(self.bpm))
 
+        self.hex_vals = final_hex_vals
         return final_hex_vals
 
     def update_s_buffer(self):

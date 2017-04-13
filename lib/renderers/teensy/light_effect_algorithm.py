@@ -10,16 +10,15 @@ import peakutils
 
 class EffectAlgorithm(vis_alg_base.VisualizationAlgorithm):
 
-    def __init__(self, bpm, nlights):
+    def __init__(self, bpm, nlights, initial_hex_vals):
         self.bpm = bpm
         self.period = 1/(bpm/60)
         self.nlights = nlights
-        self.final_hex_vals = []
-        for i in range(self.nlights):
-            self.final_hex_vals.append(utils.hsv_to_hex(0, 1, 1))
+        self.final_hex_vals = initial_hex_vals
 
         self.times = []
         self.log_time()
+        self.done = 0
 
     def freq_to_hex(self):
         pass
@@ -30,21 +29,20 @@ class EffectAlgorithm(vis_alg_base.VisualizationAlgorithm):
 
         return self.final_hex_vals
 
-class Dank(EffectAlgorithm):
-    def __init__(self, bpm, nlights):
-        super().__init__(bpm, nlights)
+class Sweep_Left(EffectAlgorithm):
+    def __init__(self, bpm, nlights, initial_hex_vals):
+        super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 0
         self.string_len = nlights//4
         self.update_range = np.arange(0, self.string_len)
         self.color = rd.random()
 
     def update(self):
-
         if self.cur_time() - self.times[-1] >= self.period:
             if self.count >= 4:
                 self.count = 0
                 self.color = rd.random()
-                
+
             self.update_range = np.arange(self.count*self.string_len, (self.count*self.string_len) + self.string_len)
 
             self.count = self.count + 1
@@ -54,7 +52,37 @@ class Dank(EffectAlgorithm):
         for i in self.update_range:
             self.final_hex_vals[i] = (utils.hsv_to_hex(self.color , 1, 1))
 
+        if self.count == 4:
+            self.done = 1
+        return self.final_hex_vals
+
+class Sweep_Right(EffectAlgorithm):
+    def __init__(self, bpm, nlights, initial_hex_vals):
+        super().__init__(bpm, nlights, initial_hex_vals)
+        self.count = 3
+        self.string_len = nlights//4
+        self.update_range = np.arange(self.count*self.string_len, (self.count*self.string_len) + self.string_len)
+        self.color = rd.random()
+
+    def update(self):
+        if self.cur_time() - self.times[-1] >= self.period:
+            if self.count < 0:
+                self.done = 1
+                self.count = 3
+                self.color = rd.random()
+
+            self.update_range = np.arange(self.count*self.string_len, (self.count*self.string_len) + self.string_len)
+
+            self.count = self.count - 1
+
+            self.log_time()
+
+        for i in self.update_range:
+            self.final_hex_vals[i] = (utils.hsv_to_hex(self.color, 1, 1))
+
+        if self.count == -1:
+            self.done = 1
         return self.final_hex_vals
 
 
-ALGORITHM_LIST = [EffectAlgorithm, Dank]
+ALGORITHM_LIST = [Sweep_Left, Sweep_Right]
