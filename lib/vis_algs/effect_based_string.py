@@ -147,6 +147,8 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         # return (corr_lag, corr/self.max_corr, self.l_buffer/self.max_l)
 
         # print('###')
+        subpeaks = []
+        x = [rd.random(), rd.random(), rd.random(), rd.random(), rd.random(), rd.random(), rd.random(), rd.random()]
         if len(subpeaks) > 0:
         #     ind = 0
         #     x = np.zeros(len(subpeaks))
@@ -173,9 +175,17 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
             self.effect_manager.colorSections([6], utils.hsv_to_hex(.3, 1, x[1]))
             self.effect_manager.colorSections([7], utils.hsv_to_hex(.6, 1, x[2]))
         else:
-            self.effect_manager.colorSections(np.arange(8), utils.hsv_to_hex(0, 1, 0))
+            self.effect_manager.colorSections([0], utils.hsv_to_hex(x[0], 1, 1))
+            self.effect_manager.colorSections([1], utils.hsv_to_hex(x[1], 1, 1))
+            self.effect_manager.colorSections([2], utils.hsv_to_hex(x[2], 1, 1))
+            self.effect_manager.colorSections([3], utils.hsv_to_hex(x[3], 1, 1))
+            self.effect_manager.colorSections([4], utils.hsv_to_hex(x[4], 1, 1))
+            self.effect_manager.colorSections([5], utils.hsv_to_hex(x[5], 1, 1))
+            self.effect_manager.colorSections([6], utils.hsv_to_hex(x[6], 1, 1))
+            self.effect_manager.colorSections([7], utils.hsv_to_hex(x[7], 1, 1))
 
         if self.cur_time() - self.times[-1] >= self.period*4:
+            x = [rd.random(), rd.random(), rd.random(), rd.random(), rd.random(), rd.random(), rd.random(), rd.random()]
             if rd.randint(0, 1):
                 self.effect_manager.strobeSection([0, 2, 4, 6])
             else:

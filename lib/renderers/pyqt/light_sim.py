@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import time
+import math
 
 import settings
 import utils
@@ -8,6 +9,7 @@ import utils
 import sys
 import numpy as np
 from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5.QtWidgets import QApplication
 
 
 class QTLightSim(QtWidgets.QWidget):
@@ -16,7 +18,8 @@ class QTLightSim(QtWidgets.QWidget):
 
     def __init__(self, height=220, length=420, stride=3, size=3):
 
-        self.app = QtGui.QApplication(sys.argv)
+        #self.app = QtGui.QApplication(sys.argv) #pyqt4
+        self.app = QApplication(sys.argv) #pyqt5
 
         self.height = height
         self.length = length
@@ -140,6 +143,43 @@ class QTLightSim(QtWidgets.QWidget):
     def close(self):
         self.app.quit()
 
+class QTLightSimStrings(QTLightSim):
+    def __init__(self, leds_per_string=50, lines=4, stride=2, size=3):
+        self.app = QtGui.QApplication(sys.argv)
+
+        self.height = leds_per_string * 3 * stride + 50
+        self.length = leds_per_string * 3 * stride
+        self.stride = stride
+        self.size = size
+        self.times = utils.CircularBuffer(self.fps_sample_window, float)
+        self.fps = 0
+
+        super(QTLightSim, self).__init__()
+        self.qp = QtGui.QPainter()
+        self.iter = 0
+
+        c1 = math.cos(math.radians(10))
+        s1 = math.sin(math.radians(10))
+        c2 = math.cos(math.radians(30))
+        s2 = math.sin(math.radians(30))
+
+        half_point = self.height//2
+        self.locations = []
+        for i in range(125):
+            self.locations.append((half_point-9*stride-s2*i*stride, c2*i*stride))
+        for i in range(125):
+            self.locations.append((half_point-3-s1*i*stride, c1*i*stride))
+        for i in range(125):
+            self.locations.append((half_point+3+s1*i*stride, c1*i*stride))
+        for i in range(125):
+            self.locations.append((half_point+9*stride+s2*i*stride, c2*i*stride))
+        self.nlights = len(self.locations)
+
+        def tmp_hex():
+            return ['#000000']*len(self.locations)
+        self.get_hex_arr = tmp_hex
+
+        self.initUI()
 
 def main():
     app = QtGui.QApplication()
@@ -147,7 +187,8 @@ def main():
 
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+    #self.app = QtGui.QApplication(sys.argv) #pyqt4
+    app = QApplication(sys.argv) #pyqt5
 
     lights = QTLightSim()
 
