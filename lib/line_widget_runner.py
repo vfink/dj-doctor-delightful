@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
 
 
-    line_widget.update()
+    line_widget.update_power()
 
     # Start the app
     print('Entering blocking PyQt5 GUI')

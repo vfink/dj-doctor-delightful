@@ -53,7 +53,12 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         return final_hex_vals
 
     def freq_to_hex(self, freq):
-        # print(freq)
+        print(freq)
+
+        power = np.sum(20*np.log10(freq))
+        if power < 0:
+            power = 0
+        print(power)
         #FREQ AVG TESTING
         self.freq_buffer = np.roll(self.freq_buffer, -1, axis=0)
         self.freq_buffer[-1] = np.reshape(freq, (1,len(self.freq_vals)))
@@ -85,7 +90,8 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
 
         # f_diff = np.absolute(np.diff(np.vstack((freq_avg, freq)), axis = 0))
         #
-        #return (freq_avg/max(freq_avg), freq/max(freq))
+        # return (freq_avg/max(freq_avg), freq/max(freq))
+        return power
         # return np.reshape(f_diff, (len(self.freq_vals),))
 
         #AUTO CORRELATION TESTING

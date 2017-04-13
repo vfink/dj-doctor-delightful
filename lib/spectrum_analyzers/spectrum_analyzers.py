@@ -54,7 +54,7 @@ class CQT(SpectrumAnalyzerABC):
 
         # get magnitude
         cqt = abs(cqt)
-        print(cqt)
+        #print(cqt)
         # print('cqt.shape:', cqt.shape)
 
         return cqt[:,0]
