@@ -30,6 +30,12 @@ class EffectAlgorithm(vis_alg_base.VisualizationAlgorithm):
 
         return self.final_hex_vals
 
+def color_full(num_leds, color = rd.random()):
+    num_array = []
+    for num in range(num_leds):
+        num_array.append(utils.hsv_to_hex(color,1,1))
+    return num_array
+
 def color_spectrum(num_leds):
     num_array = []
     for num in range(num_leds):
@@ -40,7 +46,6 @@ def color_spectrum(num_leds):
 
 def bomber(num_leds):
     num_array = []
-    print(num_leds)
     for num in range(int(num_leds/4)):
         if num% 2:
             color = utils.hsv_to_hex(.25,1,1)
@@ -49,6 +54,8 @@ def bomber(num_leds):
             white = utils.hsv_to_hex(0, 0, .1)
             num_array += [white] * 4
     return num_array
+
+num_lights = 500
 
 
 
@@ -76,6 +83,7 @@ class Sweep_Left(EffectAlgorithm):
             self.final_hex_vals[i] = (utils.hsv_to_hex(self.color , 1, 1))
 
         if self.count == 4:
+            print('should be done')
             self.done = 1
         return self.final_hex_vals
 
@@ -104,12 +112,13 @@ class Sweep_Right(EffectAlgorithm):
             self.final_hex_vals[i] = (utils.hsv_to_hex(self.color, 1, 1))
 
         if self.count == -1:
+            print('should be done')
             self.done = 1
         return self.final_hex_vals
 
-class Merge_Left_Spectrum(EffectAlgorithm):
+class Merge_Left(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
-        super().__init__(bpm, nlights, color_spectrum(nlights))
+        super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 0
         self.measure_count = 0
 
@@ -124,29 +133,10 @@ class Merge_Left_Spectrum(EffectAlgorithm):
 
             self.log_time()
 
-        if self.measure_count == 8:
+        if self.measure_count == 4:
+            print('should be done')
             self.done = 1
         return self.final_hex_vals
 
-class Merge_Left_Bomber(EffectAlgorithm):
-    def __init__(self, bpm, nlights, initial_hex_vals):
-        super().__init__(bpm, nlights, bomber(nlights))
-        self.count = 0
-        self.measure_count = 0
 
-    def update(self):
-        if self.cur_time() - self.times[-1] >= self.period/12:
-            if self.count >= 48:
-                self.count = 0
-                self.measure_count += 1
-
-            self.final_hex_vals = np.roll(self.final_hex_vals,1)
-            self.count = self.count + 1
-
-            self.log_time()
-
-        if self.measure_count == 8:
-            self.done = 1
-        return self.final_hex_vals
-
-ALGORITHM_LIST = [Sweep_Left, Sweep_Right, Merge_Left_Spectrum, Merge_Left_Bomber]
+ALGORITHM_LIST = [(Sweep_Left,color_full(num_lights)), (Sweep_Right,color_full(num_lights)), (Merge_Left,color_spectrum(num_lights)), (Merge_Left,bomber(num_lights))]

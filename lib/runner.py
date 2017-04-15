@@ -11,6 +11,6 @@ if __name__ == '__main__':
             PyAudioSampler,                     # Audio sampler
             CQT,						# Spectrum analyzer
             Visualizer,   						# Visualization algorithm
-            LightSender,                        # Light simulator / Light serial sender
+            QTLightSimStrings,                        # Light simulator / Light serial sender
             BPMDetector)                        # BPM Dectector
     app.start()
