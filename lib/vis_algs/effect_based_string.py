@@ -42,7 +42,7 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         self.power_buffer_len = self.sample_rate*2//self.nsamples
         self.power_buffer = np.zeros(self.power_buffer_len)
 
-        self.current_algorithm = ALGORITHM_LIST[0](self.bpm, self.nlights, self.hex_vals)
+        self.current_algorithm = ALGORITHM_LIST[3](self.bpm, self.nlights, self.hex_vals)
         #self.s_buffer_len = self.sample_rate//(2*self.nsamples)
         #self.s_buffer = np.zeros(self.s_buffer_len)
 
@@ -85,8 +85,8 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
             final_hex_vals = self.current_algorithm.update()
 
             if self.current_algorithm.done:
-                self.current_algorithm = ALGORITHM_LIST[rd.randint(0, len(ALGORITHM_LIST)-1)](self.bpm, self.nlights, self.hex_vals)
-                # self.current_algorithm = ALGORITHM_LIST[0](self.bpm, self.nlights, self.hex_vals)
+                #self.current_algorithm = ALGORITHM_LIST[rd.randint(0, len(ALGORITHM_LIST)-1)](self.bpm, self.nlights, self.hex_vals)
+                self.current_algorithm = ALGORITHM_LIST[3](self.bpm, self.nlights, self.hex_vals)
                 print(type(self.current_algorithm))
         else:
             final_hex_vals = self.current_algorithm.update()
