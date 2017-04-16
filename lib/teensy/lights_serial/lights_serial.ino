@@ -12,10 +12,11 @@
 #include <SerialFlash.h>
 #include <OctoWS2811.h>
 
-#define LEDS_PER_STRIP 167
-#define LEDS_LAST_STRIP 149
-#define NUM_STRIPS 8
-#define TOTAL_LEDS (LEDS_PER_STRIP * (NUM_STRIPS-1) + LEDS_LAST_STRIP)
+#define LEDS_PER_STRIP 100
+#define LEDS_LAST_STRIP 0
+#define NUM_STRIPS 4
+//#define TOTAL_LEDS (LEDS_PER_STRIP * (NUM_STRIPS-1) + LEDS_LAST_STRIP)
+#define TOTAL_LEDS (LEDS_PER_STRIP * NUM_STRIPS)
 #define BAUD 115200
 
 DMAMEM int displayMemory[LEDS_PER_STRIP*6];
@@ -122,7 +123,7 @@ void loop() {
       if (color >= 0) {
         int loc = led_location(i);
         if (loc >= 0)
-          leds.setPixel(loc, color);
+          leds.setPixel(i, color);
       }
     }
   }

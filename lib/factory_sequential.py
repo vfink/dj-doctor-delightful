@@ -14,7 +14,7 @@ class ToolStack(object):
     def __init__(self, sampler_class, spectrum_analyzer_class, vis_alg_class, renderer_class, bpm_detection_class):
         args = [sampler_class, spectrum_analyzer_class, vis_alg_class, bpm_detection_class]
         abcs = [SamplerABC, SpectrumAnalyzerABC, VisualizationAlgorithmABC, BPMDetector]
-        assert all(issubclass(arg, t) for arg, t in zip(args, abcs))
+        #assert all(issubclass(arg, t) for arg, t in zip(args, abcs))
         self.sampler_class = sampler_class
         self.spectrum_analyzer_class = spectrum_analyzer_class
         self.vis_alg_class = vis_alg_class

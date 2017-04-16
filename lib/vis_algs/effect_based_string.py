@@ -43,6 +43,7 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         self.power_buffer = np.zeros(self.power_buffer_len)
 
         self.current_algorithm = ALGORITHM_LIST[0](self.bpm, self.nlights, self.hex_vals)
+        self.algo_beats = 1
         #self.s_buffer_len = self.sample_rate//(2*self.nsamples)
         #self.s_buffer = np.zeros(self.s_buffer_len)
 
@@ -63,17 +64,17 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
     def freq_to_hex(self, freq):
 
         power = np.sum(20*np.log10(freq))
-        self.power_buffer = np.roll(self.power_buffer, -1, axis=0)
-        self.power_buffer[-1] = power
-        power_avg = np.average(self.power_buffer, axis=0)
+        # self.power_buffer = np.roll(self.power_buffer, -1, axis=0)
+        # self.power_buffer[-1] = power
+        # power_avg = np.average(self.power_buffer, axis=0)
 
         #FREQ AVG TESTING
         # print(freq)
         self.freq_buffer = np.roll(self.freq_buffer, -1, axis=0)
-        self.freq_buffer[-1] = np.reshape(freq, (1,len(self.freq_vals)))
+        self.freq_buffer[-1] = np.reshape(freq**2, (1,len(self.freq_vals)))
 
         freq_avg = np.average(self.freq_buffer, axis=0)
-        freq_avg_val = zip(freq_avg, self.freq_vals, freq)
+        freq_avg_val = zip(freq_avg, self.freq_vals, freq, np.arange(0, len(freq_avg)))
         freq_avg_val = sorted(freq_avg_val, key=lambda tup: tup[0], reverse=True)
 
         if sum(freq) > 0:
@@ -81,19 +82,98 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         else:
             base = 0
 
-        if abs(power_avg-power) > power_avg*.2:
-            final_hex_vals = self.current_algorithm.update()
+        low_end = 0
+        low_avg = 0
+        for i,j,k,u in freq_avg_val:
+            if j < 70:
+                continue
+            low_end = low_end + k
+            low_avg = low_avg + i
+            # print('freq: {0}, Ind: {1}'.format(j, u))
+            if j > 400:
+                break
 
-            if self.current_algorithm.done:
+        # print('low_end: {0}'.format(low_end))
+        # print('low_avg: {0}'.format(low_avg))
+
+        self.l_buffer = np.roll(self.l_buffer, -1, axis=0)
+        #self.l_buffer[-1] = self.s_buffer[0]
+        # self.l_buffer[-1] = freq[20]**2
+        self.l_buffer[-1] = low_end
+
+        # self.s_buffer = np.roll(self.s_buffer, -1, axis=0)
+        # self.s_buffer[-1] = freq[20]
+
+        a = max(self.l_buffer)
+        if self.max_l < a:
+             self.max_l = a
+
+        corr = np.correlate(self.l_buffer, self.s_buffer, mode='same')
+
+        # if sum(corr) > 0:
+        #     base = peakutils.baseline(corr, 2)
+        # else:
+        #     base = 0
+        #
+        # corr = corr-base
+        # corr = corr/max(corr)
+        #
+        # pre_filter = corr
+        # #indexes = peakutils.indexes(corr, thres=.4, min_dist=1)
+        # window = signal.general_gaussian(5, p=0.5, sig=20)
+        # filtered = signal.fftconvolve(window, corr)
+        # corr = (np.average(corr) / np.average(filtered)) * filtered
+        #
+        # pre_peak = np.copy(corr)
+        # subpeaks = peakutils.indexes(corr, thres=.4, min_dist=1)
+        # for i in range(0, len(corr)):
+        #     if i not in subpeaks:
+        #         corr[i] = 0
+
+        sec_corr_lag = np.arange(len(corr))/(self.sample_rate/self.nsamples)
+        min_corr_lag = sec_corr_lag/60
+        corr_lag = min_corr_lag * self.bpm
+
+        a = max(corr)
+        if self.max_corr < a:
+             self.max_corr = a
+
+        freq_diff = self.freq_buffer[-2] - self.freq_buffer[-1]
+
+        if freq_diff[freq_avg_val[0][3]] < 0:
+            freq_diff[freq_avg_val[0][3]] = 0
+
+        self.power_buffer = np.roll(self.power_buffer, 1)
+        self.power_buffer[0] = freq_diff[freq_avg_val[0][3]]
+
+        butts = np.copy(self.power_buffer)
+        subpeaks = peakutils.indexes(self.power_buffer, thres=.4, min_dist=1)
+        for i in range(0, len(self.power_buffer)):
+            if i not in subpeaks:
+                butts[i] = 0
+
+        if sum(butts[0:2]) > 0:
+            print('kapow')
+
+
+
+        if sum(butts[0:2]) > 0:
+            if self.current_algorithm.done and self.algo_beats > 8:
+                self.algo_beats = 1
+                #print('boom')
                 self.current_algorithm = ALGORITHM_LIST[rd.randint(0, len(ALGORITHM_LIST)-1)](self.bpm, self.nlights, self.hex_vals)
-                # self.current_algorithm = ALGORITHM_LIST[0](self.bpm, self.nlights, self.hex_vals)
+                # self.current_algorithm = ALGORITHM_LIST[3](self.bpm, self.nlights, self.hex_vals)
                 print(type(self.current_algorithm))
+
+            final_hex_vals = self.current_algorithm.update()
         else:
             final_hex_vals = self.current_algorithm.update()
+            # final_hex_vals = self.hex_vals
 
-        if self.cur_time() - self.times[-1] >= self.period*4:
+        if self.cur_time() - self.times[-1] >= self.period:
             self.log_time()
             print("BPM: {0}".format(self.bpm))
+            self.algo_beats = self.algo_beats + 1
 
         self.hex_vals = final_hex_vals
         return final_hex_vals
