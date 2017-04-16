@@ -9,6 +9,8 @@ class LightSender(object):
             serial_port=serial_constants.SERIAL_ADDR,
             nlights=serial_constants.TOTAL_LEDS):
 
+        # self.nlights = nlights
+        self.nlights = 400
         #self.nlights = nlights
         self.nlights = 500
 

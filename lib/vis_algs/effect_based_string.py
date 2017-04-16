@@ -42,6 +42,7 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         self.power_buffer_len = self.sample_rate*2//self.nsamples
         self.power_buffer = np.zeros(self.power_buffer_len)
 
+
         self.current_algorithm = ALGORITHM_LIST[0](self.bpm, self.nlights, self.hex_vals)
         self.algo_beats = 1
         #self.s_buffer_len = self.sample_rate//(2*self.nsamples)
