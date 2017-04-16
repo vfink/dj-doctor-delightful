@@ -258,34 +258,42 @@ def rainbow(num_leds):
     return num_array
 
 class Switch_Left(EffectAlgorithm):
+
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 0
-        self.string_len = nlights//8
-        self.update_range = np.arange(0, self.string_len)
+        self.string_len = nlights // 4
+        self.update_range1 = np.arange(self.count * self.string_len,
+                                       (self.count * self.string_len) + self.string_len // 2)
+        self.update_range2 = np.arange(self.count * self.string_len + self.string_len // 2,
+                                       (self.count * self.string_len) + self.string_len)
         self.color1 = rd.random()
         self.color2 = rd.random()
-        self.color = self.color1
 
     def update(self):
         if self.cur_time() - self.times[-1] >= self.period:
             if self.count >= 8:
+                self.done = 1
                 self.count = 0
                 self.color = rd.random()
 
-            self.update_range = np.arange(self.count*self.string_len, (self.count*self.string_len) + self.string_len)
-
-            if self.color == self.color1:
-                self.color = self.color2
-            else:
-                self.color = self.color1
+            self.update_range1 = np.arange(self.count * self.string_len,
+                                           (self.count * self.string_len) + self.string_len // 2)
+            self.update_range2 = np.arange(self.count * self.string_len + self.string_len // 2,
+                                           (self.count * self.string_len) + self.string_len)
 
             self.count = self.count + 1
 
             self.log_time()
 
-        for i in self.update_range:
-            self.final_hex_vals[i] = (utils.hsv_to_hex(self.color , 1, 1))
+            new_color = self.color1.copy()
+            self.color1 = self.color2.copy()
+            self.color2 = new_color
+
+        for i in self.update_range1:
+            self.final_hex_vals[i] = (utils.hsv_to_hex(self.color1, 1, 1))
+        for i in self.update_range1:
+            self.final_hex_vals[i] = (utils.hsv_to_hex(self.color2, 1, 1))
 
         if self.count == 8:
             self.done = 1
@@ -296,7 +304,10 @@ class Switch_Right(EffectAlgorithm):
         super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 3
         self.string_len = nlights//4
-        self.update_range = np.arange(self.count*self.string_len, (self.count*self.string_len) + self.string_len)
+        self.update_range1 = np.arange(self.count * self.string_len,
+                                       (self.count * self.string_len) + self.string_len // 2)
+        self.update_range2 = np.arange(self.count * self.string_len + self.string_len // 2,
+                                       (self.count * self.string_len) + self.string_len)
         self.color1 = rd.random()
         self.color2 = rd.random()
 
