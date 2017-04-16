@@ -53,18 +53,18 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         return final_hex_vals
 
     def freq_to_hex(self, freq):
-        print(freq)
+        #print(freq)
 
         power = np.sum(20*np.log10(freq))
         if power < 0:
             power = 0
-        print(power)
+        #print(power)
         #FREQ AVG TESTING
         self.freq_buffer = np.roll(self.freq_buffer, -1, axis=0)
-        self.freq_buffer[-1] = np.reshape(freq, (1,len(self.freq_vals)))
+        self.freq_buffer[-1] = np.reshape(freq**2, (1,len(self.freq_vals)))
 
         freq_avg = np.average(self.freq_buffer, axis=0)
-        freq_avg_val = zip(freq_avg, self.freq_vals, freq)
+        freq_avg_val = zip(freq_avg, self.freq_vals, freq, np.arange(0, len(freq_avg)))
         freq_avg_val = sorted(freq_avg_val, key=lambda tup: tup[0], reverse=True)
 
         if sum(freq) > 0:
@@ -72,7 +72,28 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         else:
             base = 0
 
+        low_end = 0
+        low_avg = 0
+        for i,j,k,u in freq_avg_val:
+            if j < 70:
+                continue
+            low_end = low_end + k
+            low_avg = low_avg + i
+            # print('freq: {0}, Ind: {1}'.format(j, u))
+            if j > 400:
+                break
 
+        freq_diff = self.freq_buffer[-2] - self.freq_buffer[-1]
+
+        if freq_diff[freq_avg_val[0][3]] > 1.3*np.average(freq_diff):
+            print('kapow')
+
+        if freq_diff[freq_avg_val[0][3]] < 0:
+            freq_diff[freq_avg_val[0][3]] = 0
+
+        return freq_diff[freq_avg_val[0][3]]
+
+        # print(freq_avg_val[0:10])
         # sub = peakutils.indexes(freq_avg[7:19], thres=.8, min_dist=2) + 14
         # low = peakutils.indexes(freq_avg[20:31], thres=.8, min_dist=2) + 20
         # mid = peakutils.indexes(freq_avg[32:130], thres=.5, min_dist=2) + 32
@@ -90,8 +111,9 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
 
         # f_diff = np.absolute(np.diff(np.vstack((freq_avg, freq)), axis = 0))
         #
-        # return (freq_avg/max(freq_avg), freq/max(freq))
-        return power
+        # return freq_avg_val[0:10]
+        # return (freq_diff[0:99], freq[0:99]/max(freq))
+        # return power
         # return np.reshape(f_diff, (len(self.freq_vals),))
 
         #AUTO CORRELATION TESTING
@@ -109,48 +131,60 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         # return (auto_lag,auto/max(auto))
 
         #CORRELATION TESTING
-        # self.l_buffer = np.roll(self.l_buffer, -1, axis=0)
-        # #self.l_buffer[-1] = self.s_buffer[0]
-        # self.l_buffer[-1] = freq[20]**2
+        self.l_buffer = np.roll(self.l_buffer, -1, axis=0)
+        #self.l_buffer[-1] = self.s_buffer[0]
+        self.l_buffer[-1] = freq[20]**2
+
+
+        # self.s_buffer = np.roll(self.s_buffer, -1, axis=0)
+        # self.s_buffer[-1] = freq[20]
+
+        a = max(self.l_buffer)
+        if self.max_l < a:
+             self.max_l = a
+
+        corr = np.correlate(self.l_buffer, self.s_buffer, mode='same')
+
+        if sum(corr) > 0:
+            base = peakutils.baseline(corr, 2)
+        else:
+            base = 0
+
+        # corr = corr-base
+        # corr = corr/max(corr)
         #
-        # # self.s_buffer = np.roll(self.s_buffer, -1, axis=0)
-        # # self.s_buffer[-1] = freq[20]
+        # pre_filter = corr
+        # #indexes = peakutils.indexes(corr, thres=.4, min_dist=1)
+        # window = signal.general_gaussian(5, p=0.5, sig=20)
+        # filtered = signal.fftconvolve(window, corr)
+        # corr = (np.average(corr) / np.average(filtered)) * filtered
         #
-        # a = max(self.l_buffer)
-        # if self.max_l < a:
-        #      self.max_l = a
-        #
-        # corr = np.correlate(self.l_buffer, self.s_buffer, mode='same')
-        #
-        # # if sum(corr) > 0:
-        # #     base = peakutils.baseline(corr, 2)
-        # # else:
-        # #     base = 0
-        # #
-        # # corr = corr-base
-        # # corr = corr/max(corr)
-        # #
-        # # pre_filter = corr
-        # # #indexes = peakutils.indexes(corr, thres=.4, min_dist=1)
-        # # window = signal.general_gaussian(5, p=0.5, sig=20)
-        # # filtered = signal.fftconvolve(window, corr)
-        # # corr = (np.average(corr) / np.average(filtered)) * filtered
-        # #
-        # # pre_peak = np.copy(corr)
-        # # subpeaks = peakutils.indexes(corr, thres=.4, min_dist=1)
-        # # for i in range(0, len(corr)):
-        # #     if i not in subpeaks:
-        # #         corr[i] = 0
-        #
-        # sec_corr_lag = np.arange(len(corr))/(self.sample_rate/self.nsamples)
-        # min_corr_lag = sec_corr_lag/60
-        # corr_lag = min_corr_lag * self.bpm
-        #
-        # a = max(corr)
-        # if self.max_corr < a:
-        #      self.max_corr = a
-        #
-        # return (corr_lag, corr/self.max_corr, self.l_buffer/self.max_l)
+        # pre_peak = np.copy(corr)
+        # subpeaks = peakutils.indexes(corr, thres=.4, min_dist=1)
+        # for i in range(0, len(corr)):
+        #     if i not in subpeaks:
+        #         corr[i] = 0
+
+        corr_peak = peakutils.indexes(corr, thres=.4, min_dist=1)
+        for i in range(0, len(corr)):
+            if i not in corr_peak:
+                corr[i] = 0
+
+        sec_corr_lag = np.arange(len(corr))/(self.sample_rate/self.nsamples)
+        min_corr_lag = sec_corr_lag/60
+        corr_lag = min_corr_lag * self.bpm
+
+        a = max(corr)
+        # print(corr)
+        # print(a)
+        # print(corr[-1])
+        if max(self.l_buffer) == self.l_buffer[-1]:
+            print('kapow')
+        if self.max_corr < a:
+             self.max_corr = a
+
+
+        return (corr_lag, corr/self.max_corr, self.l_buffer/self.max_l)
 
         # print('###')
         if len(subpeaks) > 0:

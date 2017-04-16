@@ -32,8 +32,8 @@ class LineWidget(pg.PlotWidget):
         #graph two lines with same x
         # self.graph = self.plot(x=self.freqs, y=self.freqs, pen=(0,2))
         # self.graph2 = self.plot(x=self.freqs, y=self.freqs, pen=(1,2))
-        #self.graph = self.plot(x=self.freqs, y=self.freqs, pen=(0,2))
-        #self.graph2 = self.plot(x=self.freqs, y=self.freqs, pen=(1,2))
+        # self.graph = self.plot(x=self.freqs, y=self.freqs, pen=(0,2))
+        # self.graph2 = self.plot(x=self.freqs, y=self.freqs, pen=(1,2))
 
         self.power = np.arange(100)
         self.power_plot = self.plotItem.plot(x=np.arange(100), y=self.power)
@@ -64,14 +64,15 @@ class LineWidget(pg.PlotWidget):
         #self.audioPlot.setData(self.audioY)
 
         #graph two lines with same x
-        self.graph.setData(self.freqs,spectrum[0], pen=(0,2))
-        self.graph2.setData(self.freqs,spectrum[1], pen=(1,2))
+        self.graph.setData(self.freqs[0:99],spectrum[0], pen=(0,2))
+        self.graph2.setData(self.freqs[0:99],spectrum[1], pen=(1,2))
 
         QtCore.QTimer.singleShot(1, self.update)  # QUICKLY repeat
 
     def update2(self):
 
         spectrum = self.get_spectrum()
+
         # print("spectrum len: {0}".format(len(spectrum)))
         # print("freq len: {0}".format(len(self.freqs)))
         # p90 = np.percentile(spectrum, 90)
@@ -88,12 +89,14 @@ class LineWidget(pg.PlotWidget):
         #self.audioX = list(np.roll(self.audioX, self.nsamples))
         #self.audioY = list(np.roll(self.audioY, self.nsamples))
 
-        self.audioPlot.setData(self.power)
+        #self.audioPlot.setData(self.power)
 
 
         #graph two lines with same x
         # self.graph.setData(self.freqs,spectrum[0], pen=(0,2))
         # self.graph2.setData(self.freqs,spectrum[1], pen=(1,2))
+        self.graph.setData(spectrum[0],spectrum[1], pen=(0,3))
+        self.graph2.setData(spectrum[0],spectrum[2], pen=(2,3))
 
         QtCore.QTimer.singleShot(1, self.update2)  # QUICKLY repeat
 
@@ -118,8 +121,14 @@ class LineWidget(pg.PlotWidget):
         self.power = np.roll(self.power, 1)
         self.power[0] = spectrum
 
+        butts = np.copy(self.power)
+        subpeaks = peakutils.indexes(self.power, thres=.4, min_dist=1)
+        for i in range(0, len(self.power)):
+            if i not in subpeaks:
+                butts[i] = 0
+
         #self.audioPlot.setData(self.audioY)
-        self.power_plot.setData(self.power)
+        self.power_plot.setData(butts)
 
         #graph arbitrary x and y
         # self.graph.setData(spectrum[0],spectrum[1])

@@ -11,6 +11,8 @@ class LightSender(object):
 
         # self.nlights = nlights
         self.nlights = 400
+        #self.nlights = nlights
+        self.nlights = 500
 
         try:
             self.serial = serial.Serial(
