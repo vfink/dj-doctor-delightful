@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="eb17aa2f-ae09-4781-b4ad-83569966ae51" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/renderers/teensy/light_effect_algorithm.py" afterPath="$PROJECT_DIR$/lib/renderers/teensy/light_effect_algorithm.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -59,8 +60,8 @@
       <file leaf-file-name="light_effect_algorithm.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/lib/renderers/teensy/light_effect_algorithm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="286">
-              <caret line="309" column="88" lean-forward="true" selection-start-line="309" selection-start-column="88" selection-end-line="309" selection-end-column="88" />
+            <state relative-caret-position="2131">
+              <caret line="356" column="0" lean-forward="true" selection-start-line="356" selection-start-column="0" selection-end-line="356" selection-end-column="0" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -764,8 +765,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/renderers/teensy/light_effect_algorithm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="286">
-          <caret line="309" column="88" lean-forward="true" selection-start-line="309" selection-start-column="88" selection-end-line="309" selection-end-column="88" />
+        <state relative-caret-position="2131">
+          <caret line="356" column="0" lean-forward="true" selection-start-line="356" selection-start-column="0" selection-end-line="356" selection-end-column="0" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>

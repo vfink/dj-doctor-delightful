@@ -350,12 +350,12 @@ class Merge_Left_Bomber(EffectAlgorithm):
         self.measure_count = 0
 
     def update(self):
-        if self.cur_time() - self.times[-1] >= self.period/24:
-            if self.count >= 48:
+        if self.cur_time() - self.times[-1] >= self.period/4:
+            if self.count >= 8:
                 self.count = 0
                 self.measure_count += 1
 
-            self.final_hex_vals = np.roll(self.final_hex_vals,1)
+            self.final_hex_vals = np.roll(self.final_hex_vals,4)
             self.count = self.count + 1
 
             self.log_time()
@@ -371,12 +371,12 @@ class Merge_Left_Spectrum(EffectAlgorithm):
         self.measure_count = 0
 
     def update(self):
-        if self.cur_time() - self.times[-1] >= self.period/24:
-            if self.count >= 48:
+        if self.cur_time() - self.times[-1] >= self.period/4:
+            if self.count >= 8:
                 self.count = 0
                 self.measure_count += 1
 
-            self.final_hex_vals = np.roll(self.final_hex_vals,1)
+            self.final_hex_vals = np.roll(self.final_hex_vals,4)
             self.count = self.count + 1
 
             self.log_time()
@@ -392,12 +392,12 @@ class Merge_Right_Bomber(EffectAlgorithm):
         self.measure_count = 0
 
     def update(self):
-        if self.cur_time() - self.times[-1] >= self.period/24:
-            if self.count >= 48:
+        if self.cur_time() - self.times[-1] >= self.period/4:
+            if self.count >= 8:
                 self.count = 0
                 self.measure_count += 1
 
-            self.final_hex_vals = np.roll(self.final_hex_vals,-1)
+            self.final_hex_vals = np.roll(self.final_hex_vals,-4)
             self.count = self.count + 1
 
             self.log_time()
@@ -413,12 +413,12 @@ class Merge_Right_Spectrum(EffectAlgorithm):
         self.measure_count = 0
 
     def update(self):
-        if self.cur_time() - self.times[-1] >= self.period/24:
-            if self.count >= 48:
+        if self.cur_time() - self.times[-1] >= self.period/4:
+            if self.count >= 8:
                 self.count = 0
                 self.measure_count += 1
 
-            self.final_hex_vals = np.roll(self.final_hex_vals,-1)
+            self.final_hex_vals = np.roll(self.final_hex_vals,-4)
             self.count = self.count + 1
 
             self.log_time()
@@ -434,13 +434,37 @@ class Merge_Right_Rainbow(EffectAlgorithm):
         self.measure_count = 0
 
     def update(self):
-        if self.cur_time() - self.times[-1] >= self.period/24:
-            if self.count >= 48:
+        if self.cur_time() - self.times[-1] >= self.period/4:
+            if self.count >= 8:
                 self.count = 0
                 self.measure_count += 1
 
-            self.final_hex_vals = np.roll(self.final_hex_vals,-1)
+            self.final_hex_vals = np.roll(self.final_hex_vals,-4)
             self.count = self.count + 1
+
+            self.log_time()
+
+        if self.measure_count == 2:
+            self.done = 1
+        return self.final_hex_vals
+
+class Merge_Left_Rainbow(EffectAlgorithm):
+    def __init__(self, bpm, nlights, initial_hex_vals):
+        super().__init__(bpm, nlights, rainbow(nlights))
+        self.count = 0
+        self.measure_count = 0
+
+    def update(self):
+        if self.cur_time() - self.times[-1] >= self.period/4:
+            if self.count >= 8:
+                self.count = 0
+                self.measure_count += 1
+
+            self.final_hex_vals = np.roll(self.final_hex_vals,4)
+            self.count = self.count + 1
+
+            self.log_time()
+
 
             self.log_time()
 
@@ -451,4 +475,4 @@ class Merge_Right_Rainbow(EffectAlgorithm):
 
 
 ALGORITHM_LIST = [Sweep_Left, Sweep_Right, Gradient_Sweep, Chase_Down, Merge_Left_Spectrum, Merge_Left_Bomber,
-                  Merge_Right_Spectrum,Merge_Right_Bomber,Switch_Left,Switch_Right, Merge_Right_Rainbow]
+                  Merge_Right_Spectrum,Merge_Right_Bomber,Switch_Left,Switch_Right, Merge_Right_Rainbow, Merge_Left_Rainbow]
