@@ -42,7 +42,7 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         self.power_buffer_len = self.sample_rate*2//self.nsamples
         self.power_buffer = np.zeros(self.power_buffer_len)
 
-        self.current_algorithm = ALGORITHM_LIST[0][0](self.bpm, self.nlights, self.hex_vals)
+        self.current_algorithm = ALGORITHM_LIST[8](self.bpm, self.nlights, self.hex_vals)
         #self.s_buffer_len = self.sample_rate//(2*self.nsamples)
         #self.s_buffer = np.zeros(self.s_buffer_len)
 
@@ -80,17 +80,12 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
             base = peakutils.baseline(freq_avg, 2)
         else:
             base = 0
-        print(power_avg, power)
-        if abs(power_avg-power) > power_avg*.2:
-            final_hex_vals = self.current_algorithm.update()
-            print('beat',self.current_algorithm.done)
-            if self.current_algorithm.done:
+        final_hex_vals = self.current_algorithm.update()
+        if self.current_algorithm.done:
                 algorithm = ALGORITHM_LIST[rd.randint(0, len(ALGORITHM_LIST) - 1)]
-                self.current_algorithm = algorithm[0](self.bpm, self.nlights, algorithm[1])
+                self.current_algorithm = algorithm(self.bpm, self.nlights,self.hex_vals)
                 #self.current_algorithm = ALGORITHM_LIST[3](self.bpm, self.nlights, self.hex_vals)
                 print(type(self.current_algorithm))
-        else:
-            final_hex_vals = self.current_algorithm.update()
 
         if self.cur_time() - self.times[-1] >= self.period*4:
             self.log_time()
