@@ -6,7 +6,6 @@ from vis_algs import vis_alg_base
 
 import random as rd
 from music_processors.bpm_detection import BPMDetector
-from  renderers.teensy.light_effect_algorithm import *
 
 import peakutils
 
@@ -22,9 +21,6 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         self.freq_buffer_len = 100
         self.freq_buffer = np.zeros([self.freq_buffer_len, len(self.freq_vals)])
 
-        self.hex_vals = []
-        for i in range(self.nlights):
-            self.hex_vals.append(utils.hsv_to_hex(0, 1, 1))
 
         self.sample_rate = spectrum_analyzer.sample_rate
         self.nsamples = spectrum_analyzer.nsamples
@@ -39,12 +35,6 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         self.max_corr = 0
         self.max_l = 0
 
-        self.power_buffer_len = self.sample_rate*2//self.nsamples
-        self.power_buffer = np.zeros(self.power_buffer_len)
-
-
-        self.current_algorithm = ALGORITHM_LIST[0](self.bpm, self.nlights, self.hex_vals)
-        self.algo_beats = 1
         #self.s_buffer_len = self.sample_rate//(2*self.nsamples)
         #self.s_buffer = np.zeros(self.s_buffer_len)
 
@@ -62,39 +52,14 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
 
         return final_hex_vals
 
-    def pick_dtyd_algorithm(self, alg_list):
-        #this is not a good function, i am hardcoding based on current alg names
-        found = False
-        while (found is False):
-            result = alg_list[rd.randint(0, len(alg_list)-1)]
-            if (result!=self.current_algorithm):
-                #check for similar algs
-                if (self.current_algorithm==Merge_Left_Rainbow and result==Merge_Right_Rainbow):
-                    pass
-                elif (self.current_algorithm==Merge_Right_Rainbow and result==Merge_Left_Rainbow):
-                    pass
-                elif (self.current_algorithm==Merge_Left_Bomber and result==Merge_Right_Bomber):
-                    pass
-                elif (self.current_algorithm==Merge_Right_Bomber and result==Merge_Left_Bomber):
-                    pass
-                elif (self.current_algorithm==Firework and result==Firework_Color):
-                    pass
-                elif (self.current_algorithm==Firework_Color and result==Firework):
-                    pass
-                else:
-                    #print("new alg: ", result)
-                    found = True
-                    return result
-
     def freq_to_hex(self, freq):
+        #print(freq)
 
         power = np.sum(20*np.log10(freq))
-        # self.power_buffer = np.roll(self.power_buffer, -1, axis=0)
-        # self.power_buffer[-1] = power
-        # power_avg = np.average(self.power_buffer, axis=0)
-
+        if power < 0:
+            power = 0
+        #print(power)
         #FREQ AVG TESTING
-        # print(freq)
         self.freq_buffer = np.roll(self.freq_buffer, -1, axis=0)
         self.freq_buffer[-1] = np.reshape(freq**2, (1,len(self.freq_vals)))
 
@@ -118,13 +83,58 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
             if j > 400:
                 break
 
-        # print('low_end: {0}'.format(low_end))
-        # print('low_avg: {0}'.format(low_avg))
+        freq_diff = self.freq_buffer[-2] - self.freq_buffer[-1]
 
+        if freq_diff[freq_avg_val[0][3]] > 1.3*np.average(freq_diff):
+            print('kapow')
+
+        if freq_diff[freq_avg_val[0][3]] < 0:
+            freq_diff[freq_avg_val[0][3]] = 0
+
+        # return freq_diff[freq_avg_val[0][3]]
+
+        # print(freq_avg_val[0:10])
+        # sub = peakutils.indexes(freq_avg[7:19], thres=.8, min_dist=2) + 14
+        # low = peakutils.indexes(freq_avg[20:31], thres=.8, min_dist=2) + 20
+        # mid = peakutils.indexes(freq_avg[32:130], thres=.5, min_dist=2) + 32
+        # high = peakutils.indexes(freq_avg[200:1200], thres=.5, min_dist=2) + 200
+        #
+        # # subpeaks = peakutils.indexes(freq_avg-base, thres=.8, min_dist=10)
+        # #subpeaks = np.concatenate((sub,low,mid,high))
+        # subpeaks = [self.get_highest_ind(sub, freq_avg, 7), self.get_highest_ind(low, freq_avg, 20), self.get_highest_ind(mid, freq_avg, 31), self.get_highest_ind(high, freq_avg, 200)]
+        # for i in range(0, len(freq_avg)):
+        #     if freq[i] < freq_avg[i]:
+        #         freq[i] = 0
+        #     if i not in subpeaks:
+        #          #freq_avg[i] = 0
+        #         freq[i] = 0
+
+        # f_diff = np.absolute(np.diff(np.vstack((freq_avg, freq)), axis = 0))
+        #
+        # return freq_avg_val[0:10]
+        # return (freq_diff[0:99], freq[0:99]/max(freq))
+        # return power
+        # return np.reshape(f_diff, (len(self.freq_vals),))
+
+        #AUTO CORRELATION TESTING
+        # self.auto_buffer = np.roll(self.auto_buffer, -1, axis=0)
+        # self.auto_buffer[-1] = freq[20]
+        #
+        # auto = self.autocorr(self.auto_buffer)
+        #
+        # # number of samples to bpm
+        # sec_per_beat = np.arange(len(auto))/((self.sample_rate/self.nsamples)*60)
+        # auto_lag = np.flip((1/sec_per_beat), 0)
+        #
+        # auto = np.flip(auto, 0)
+        #
+        # return (auto_lag,auto/max(auto))
+
+        #CORRELATION TESTING
         self.l_buffer = np.roll(self.l_buffer, -1, axis=0)
         #self.l_buffer[-1] = self.s_buffer[0]
-        # self.l_buffer[-1] = freq[20]**2
-        self.l_buffer[-1] = low_end
+        self.l_buffer[-1] = freq[20]**2
+
 
         # self.s_buffer = np.roll(self.s_buffer, -1, axis=0)
         # self.s_buffer[-1] = freq[20]
@@ -135,11 +145,11 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
 
         corr = np.correlate(self.l_buffer, self.s_buffer, mode='same')
 
-        # if sum(corr) > 0:
-        #     base = peakutils.baseline(corr, 2)
-        # else:
-        #     base = 0
-        #
+        if sum(corr) > 0:
+            base = peakutils.baseline(corr, 2)
+        else:
+            base = 0
+
         # corr = corr-base
         # corr = corr/max(corr)
         #
@@ -155,55 +165,84 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         #     if i not in subpeaks:
         #         corr[i] = 0
 
+        corr_peak = peakutils.indexes(corr, thres=.4, min_dist=1)
+        for i in range(0, len(corr)):
+            if i not in corr_peak:
+                corr[i] = 0
+
         sec_corr_lag = np.arange(len(corr))/(self.sample_rate/self.nsamples)
         min_corr_lag = sec_corr_lag/60
         corr_lag = min_corr_lag * self.bpm
 
         a = max(corr)
+        # print(corr)
+        # print(a)
+        # print(corr[-1])
+        if max(self.l_buffer) == self.l_buffer[-1]:
+            print('kapow')
         if self.max_corr < a:
              self.max_corr = a
 
-        freq_diff = self.freq_buffer[-2] - self.freq_buffer[-1]
 
-        if freq_diff[freq_avg_val[0][3]] < 0:
-            freq_diff[freq_avg_val[0][3]] = 0
+        # return (corr_lag, corr/self.max_corr, self.l_buffer/self.max_l)
+        subpeaks = []
+        # print('###')
+        if len(subpeaks) > 0:
+        #     ind = 0
+        #     x = np.zeros(len(subpeaks))
+        #     for i in subpeaks:
+        #         print("peak at {0}Hz".format(self.freq_vals[i]))
+        #         if freq_avg[i]*1.25 < freq[i]:
+        #             x[ind] = 1
+        #         ind = ind + 1
 
-        self.power_buffer = np.roll(self.power_buffer, 1)
-        self.power_buffer[0] = freq_diff[freq_avg_val[0][3]]
+            x = np.zeros(4)
+            for i in range(4):
+                if freq_avg[subpeaks[i]] == 0:
+                    f = 1
+                else:
+                    f = freq_avg[subpeaks[i]]
+                x[i] = freq[subpeaks[i]]/f
 
-        butts = np.copy(self.power_buffer)
-        subpeaks = peakutils.indexes(self.power_buffer, thres=.4, min_dist=1)
-        for i in range(0, len(self.power_buffer)):
-            if i not in subpeaks:
-                butts[i] = 0
-        #
-        # if sum(butts[0:2]) > 0:
-            #print('kapow')
-
-
-
-
-        if sum(butts[0:2]) > 0:
-            print("beat")
-            if self.current_algorithm.done and self.algo_beats > 8:
-                self.algo_beats = 1
-                print('boom')
-                self.log_time()
-                self.current_algorithm = self.pick_dtyd_algorithm(ALGORITHM_LIST)(self.bpm, self.nlights, self.hex_vals)
-                # self.current_algorithm = ALGORITHM_LIST[3](self.bpm, self.nlights, self.hex_vals)
-                print(type(self.current_algorithm))
-
-            final_hex_vals = self.current_algorithm.update()
+            self.effect_manager.colorSections([0], utils.hsv_to_hex(0, 1, x[0]))
+            self.effect_manager.colorSections([1], utils.hsv_to_hex(.8, 1, x[3]))
+            self.effect_manager.colorSections([2], utils.hsv_to_hex(.6, 1, x[2]))
+            self.effect_manager.colorSections([3], utils.hsv_to_hex(.3, 1, x[1]))
+            self.effect_manager.colorSections([4], utils.hsv_to_hex(.8, 1, x[3]))
+            self.effect_manager.colorSections([5], utils.hsv_to_hex(0, 1, x[0]))
+            self.effect_manager.colorSections([6], utils.hsv_to_hex(.3, 1, x[1]))
+            self.effect_manager.colorSections([7], utils.hsv_to_hex(.6, 1, x[2]))
         else:
-            final_hex_vals = self.current_algorithm.update()
-            # final_hex_vals = self.hex_vals
+            self.effect_manager.colorSections(np.arange(8), utils.hsv_to_hex(0, 1, 0))
 
-        if self.cur_time() - self.times[-1] >= self.period:
+        if self.cur_time() - self.times[-1] >= self.period*4:
+            if rd.randint(0, 1):
+                self.effect_manager.strobeSection([0, 2, 4, 6])
+            else:
+                self.effect_manager.strobeSection([1, 3, 5, 7])
             self.log_time()
             print("BPM: {0}".format(self.bpm))
-            self.algo_beats = self.algo_beats + 1
 
-        self.hex_vals = final_hex_vals
+        tmp_dict = self.effect_manager.get_light_Dict()
+
+        if len(self.snake.get_light_Dict()) == 0:
+            start = rd.randint(0, self.nlights-200)
+            length = rd.randint(1,20)
+            velocity = rd.randint(1, 5)
+            duration = rd.randint(50, 200)
+            self.snake = snake(color = utils.hsv_to_hex((rd.random()/10), 1, 1),
+                                nlights = self.nlights, start = start,
+                                length=length, velocity=velocity,
+                                duration= duration)
+        else:
+            self.snake.update()
+            for i in self.snake.get_light_Dict().keys():
+                tmp_dict[i] = self.snake.get_light_Dict()[i]
+
+        final_hex_vals = []
+        for i in range(self.nlights):
+            final_hex_vals.append(tmp_dict[i])
+
         return final_hex_vals
 
     def update_s_buffer(self):
@@ -215,8 +254,8 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         b3 = np.concatenate((b, a*.75))
         b4 = np.concatenate((b, a*.5))
         self.s_buffer = np.concatenate((b4, b3, b2, b1))
-        #print(self.s_buffer)
-        #print(self.bpm)
+        print(self.s_buffer)
+        print(self.bpm)
 
     def update_bpm(self, bpm):
         self.last_bpm = self.bpm

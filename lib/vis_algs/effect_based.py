@@ -91,7 +91,7 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         if freq_diff[freq_avg_val[0][3]] < 0:
             freq_diff[freq_avg_val[0][3]] = 0
 
-        return freq_diff[freq_avg_val[0][3]]
+        # return freq_diff[freq_avg_val[0][3]]
 
         # print(freq_avg_val[0:10])
         # sub = peakutils.indexes(freq_avg[7:19], thres=.8, min_dist=2) + 14
@@ -184,8 +184,8 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
              self.max_corr = a
 
 
-        return (corr_lag, corr/self.max_corr, self.l_buffer/self.max_l)
-
+        # return (corr_lag, corr/self.max_corr, self.l_buffer/self.max_l)
+        subpeaks = []
         # print('###')
         if len(subpeaks) > 0:
         #     ind = 0
@@ -196,13 +196,13 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         #             x[ind] = 1
         #         ind = ind + 1
 
-            x = np.zeros(4)
-            for i in range(4):
-                if freq_avg[subpeaks[i]] == 0:
-                    f = 1
-                else:
-                    f = freq_avg[subpeaks[i]]
-                x[i] = freq[subpeaks[i]]/f
+            # x = np.zeros(4)
+            # for i in range(4):
+            #     if freq_avg[subpeaks[i]] == 0:
+            #         f = 1
+            #     else:
+            #         f = freq_avg[subpeaks[i]]
+            #     x[i] = freq[subpeaks[i]]/f
 
             self.effect_manager.colorSections([0], utils.hsv_to_hex(0, 1, x[0]))
             self.effect_manager.colorSections([1], utils.hsv_to_hex(.8, 1, x[3]))

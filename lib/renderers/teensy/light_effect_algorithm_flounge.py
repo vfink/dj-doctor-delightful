@@ -1,13 +1,32 @@
-import numpy as np
+  import numpy as np
 import math
 import scipy.signal as signal
 from renderers.teensy import serial_constants
 import utils
 from vis_algs import vis_alg_base
 
+
 import random as rd
 import time
 import peakutils
+
+int FLOUNGE_STRIP =  8
+
+# Good Design Rules:
+# 1) At a single point in time a person can only see half of the lights in the room.
+#     This means that all patterns should be completly viewable in one human frame
+#     of vision and mirrored in the half of the wall they can't see. The only time
+#     this might not be true is if you are trying to achieve an effect of bamboozling
+#     the viewer with things that enter and leave their field of vision quicklyself.
+# 2) If possible avoid smooth motions, it is hard to recognize the correlationg
+# between the discrete punchiness of musical notes and continuous flowing patterns
+# as always, this never means smooth motions are bad. You can incorporate punchiness
+# in another dimension by having flowing continuous patterns that have discrete changes
+# in something like the rate of thier flow. (ex: Imagine a continuous flowing pattern
+# that flows at twice it's normal rate on every other beat of music, the increase in
+# flow would correlate with the beat). Multideminsional patterns like this are very
+# desiered as thier complexity makes them even more visualy stimulating than more simple
+# blinking patterns.
 
 class EffectAlgorithm(vis_alg_base.VisualizationAlgorithm):
 
@@ -30,18 +49,25 @@ class EffectAlgorithm(vis_alg_base.VisualizationAlgorithm):
 
         return self.final_hex_vals
 
+
+def led_location(led):
+    led_index = 0
+
+    return
+
+
 class Sweep_Left(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 0
-        self.string_len = nlights//4
+        self.string_len = nlights//FLOUNGE_STRIP
         self.update_range = np.arange(0, self.string_len)
         self.color = rd.random()
 
     def update(self):
         if self.cur_time() - self.times[-1] >= self.period/2:
         # if True:
-            if self.count >= 4:
+            if self.count >= FLOUNGE_STRIP:
                 self.count = 0
                 self.color = rd.random()
 
@@ -54,7 +80,7 @@ class Sweep_Left(EffectAlgorithm):
         for i in self.update_range:
             self.final_hex_vals[i] = (utils.hsv_to_hex(self.color , 1, 1))
 
-        if self.count == 4:
+        if self.count == FLOUNGE_STRIP:
             self.done = 1
         return self.final_hex_vals
 
@@ -62,7 +88,7 @@ class Sweep_Right(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 3
-        self.string_len = nlights//4
+        self.string_len = nlights//FLOUNGE_STRIP
         self.update_range = np.arange(self.count*self.string_len, (self.count*self.string_len) + self.string_len)
         self.color = rd.random()
 
@@ -71,7 +97,7 @@ class Sweep_Right(EffectAlgorithm):
         # if True:
             if self.count < 0:
                 self.done = 1
-                self.count = 3
+                self.count = FLOUNGE_STRIP-1
                 self.color = rd.random()
 
             self.update_range = np.arange(self.count*self.string_len, (self.count*self.string_len) + self.string_len)
@@ -95,7 +121,7 @@ def update_string(led, string, string_len):
 class Gradient_Sweep(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, initial_hex_vals)
-        self.string_len = nlights//4
+        self.string_len = nlights//FLOUNGE_STRIP
         print(self.string_len)
 
         self.color_matrix = np.zeros((self.string_len, self.string_len))
@@ -137,7 +163,7 @@ class Gradient_Sweep(EffectAlgorithm):
 
                 if self.shift_array[i] >= self.string_len:
                     self.shift_count = self.shift_count + 1
-                    if self.shift_count >= 3:
+                    if self.shift_count >= FLOUNGE_STRIP-1:
                         self.done = 1
                     self.shift_array[i] = self.shift_array[i] - self.string_len
 
@@ -150,7 +176,7 @@ class Gradient_Sweep(EffectAlgorithm):
 
         #print(self.shift_array)
 
-        for i in range(4):
+        for i in range(FLOUNGE_STRIP):
             for l in range(self.string_len):
                 #print('l: {0}'.format(l))
                 #print('shift: {0}'.format(self.shift+i))
@@ -165,7 +191,7 @@ class Chase_Down(EffectAlgorithm):
             initial_hex_vals[i] = utils.hsv_to_hex(self.color, 0, 0)
         super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 0
-        self.string_len = nlights//4
+        self.string_len = nlights//FLOUNGE_STRIP
 
     def update(self):
         if self.cur_time() - self.times[-1] >= self.period/4:
@@ -177,7 +203,7 @@ class Chase_Down(EffectAlgorithm):
                 self.color = rd.random()
             self.log_time()
 
-        for i in range(4):
+        for i in range(FLOUNGE_STRIP):
             for l in range(self.count):
                 self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(self.color, 1, 1)
 
@@ -190,9 +216,9 @@ class Expanding_Stars(EffectAlgorithm):
             initial_hex_vals[i] = utils.hsv_to_hex(self.color, 0, 0)
         super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 0
-        self.string_len = nlights//4
-        self.color_matrix = np.zeros((self.string_len, 4))
-        self.color_matrix[rd.randint(0, self.string_len)][rd.randint(0, 4)] = rd.random()
+        self.string_len = nlights//FLOUNGE_STRIP
+        self.color_matrix = np.zeros((self.string_len, FLOUNGE_STRIP))
+        self.color_matrix[rd.randint(0, self.string_len)][rd.randint(0, FLOUNGE_STRIP)] = rd.random()
 
     def update(self):
         if self.cur_time() - self.times[-1] >= self.period/4:
@@ -204,11 +230,11 @@ class Expanding_Stars(EffectAlgorithm):
                 self.color = rd.random()
             self.log_time()
 
-            for string in range(4):
+            for string in range(FLOUNGE_STRIP):
                 for led in range(self.string_len):
                     self.final_hex_vals[string*self.string_len+led] = self.color_matrix[led][string]
 
-            for string in range(4):
+            for string in range(FLOUNGE_STRIP):
                 for led in range(self.string_len):
                     self.final_hex_vals[string*self.string_len+led] = self.color_matrix[led][string]
 
@@ -230,7 +256,7 @@ def color_spectrum(num_leds):
 
 def bomber(num_leds):
     num_array = []
-    for num in range(int(num_leds/4)):
+    for num in range(int(num_leds/FLOUNGE_STRIP)):
         if num% 2:
             white = utils.hsv_to_hex(0, 0, .1)
             num_array += [white] * 4
@@ -241,7 +267,7 @@ def bomber(num_leds):
 
 def rainbow(num_leds):
     num_array = []
-    for num in range(int(num_leds/4)):
+    for num in range(int(num_leds/FLOUNGE_STRIP)):
         if num%6 == 0:
             color = utils.hsv_to_hex(0, 1, 1)
         elif num%6 == 1:
@@ -273,7 +299,7 @@ class Switch_Left(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 1
-        self.string_len = nlights // 4
+        self.string_len = nlights // FLOUNGE_STRIP
         self.update_range1 = np.arange(0 , self.string_len // 2)
         self.update_range2 = np.arange(self.string_len // 2, self.string_len)
         self.color1 = rd.random()
@@ -281,7 +307,7 @@ class Switch_Left(EffectAlgorithm):
 
     def update(self):
         if self.cur_time() - self.times[-1] >= self.period:
-            if self.count >= 4:
+            if self.count >= FLOUNGE_STRIP:
                 self.done = 1
                 self.count = 0
                 self.color = rd.random()
@@ -304,15 +330,15 @@ class Switch_Left(EffectAlgorithm):
         for i in self.update_range2:
             self.final_hex_vals[i] = (utils.hsv_to_hex(self.color2, 1, 1))
 
-        if self.count == 4:
+        if self.count == FLOUNGE_STRIP:
             self.done = 1
         return self.final_hex_vals
 
 class Switch_Right(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, initial_hex_vals)
-        self.count = 2
-        self.string_len = nlights // 4
+        self.count = FLOUNGE_STRIP//2
+        self.string_len = nlights // FLOUNGE_STRIP
         self.update_range1 = np.arange(0 , self.string_len // 2)
         self.update_range2 = np.arange(self.string_len // 2, self.string_len)
         self.color1 = rd.random()
@@ -322,7 +348,7 @@ class Switch_Right(EffectAlgorithm):
         if self.cur_time() - self.times[-1] >= self.period:
             if self.count < 0:
                 self.done = 1
-                self.count = 3
+                self.count = FLOUNGE_STRIP
                 self.color = rd.random()
 
             self.update_range1 = np.arange(self.count*self.string_len,
@@ -374,7 +400,7 @@ class Merge_Left_Bomber(EffectAlgorithm):
 class Merge_Left_Spectrum(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, color_spectrum(nlights))
-        self.string_len = nlights//8
+        self.string_len = nlights//FLOUNGE_STRIP
         self.count = 0
         self.measure_count = 0
 
@@ -417,7 +443,7 @@ class Merge_Right_Bomber(EffectAlgorithm):
 class Merge_Right_Spectrum(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, color_spectrum(nlights))
-        self.string_len = nlights//4
+        self.string_len = nlights//FLOUNGE_STRIP
         self.count = 0
         self.measure_count = 0
 
@@ -509,7 +535,7 @@ class Firework(EffectAlgorithm):
             initial_hex_vals[i] = utils.hsv_to_hex(self.color, 0, 0)
         super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 0
-        self.string_len = nlights//4
+        self.string_len = nlights//FLOUNGE_STRIP
         self.color_matrix = np.zeros((self.string_len, 4))
         self.pitted = 1
         for i in range(4):
@@ -540,11 +566,11 @@ class Firework(EffectAlgorithm):
             self.pitted = not self.pitted
 
         if self.pitted:
-            for i in range(4):
+            for i in range(FLOUNGE_STRIP):
                 for l in range(self.string_len):
                     self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(0, 0, self.color_matrix[l][i])
         else:
-            for i in range(4):
+            for i in range(FLOUNGE_STRIP):
                 for l in range(self.string_len):
                     self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(0, 0, 0)
 
@@ -557,10 +583,10 @@ class Firework_Color(EffectAlgorithm):
             initial_hex_vals[i] = utils.hsv_to_hex(self.color, 0, 0)
         super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 0
-        self.string_len = nlights//4
-        self.color_matrix = np.zeros((self.string_len, 4))
+        self.string_len = nlights//FLOUNGE_STRIP
+        self.color_matrix = np.zeros((self.string_len, FLOUNGE_STRIP))
         self.pitted = 1
-        for i in range(4):
+        for i in range(FLOUNGE_STRIP):
             for l in range(self.string_len):
                 if l % 3 == 1:
                     tmp = 1
@@ -572,7 +598,7 @@ class Firework_Color(EffectAlgorithm):
         if self.cur_time() - self.times[-1] >= self.period/16:
         # if True:
             self.count = self.count + 1
-            for i in range(4):
+            for i in range(FLOUNGE_STRIP):
                 mixer = rd.randint(0,2)
                 for l in range(self.string_len):
                     if (l+mixer) % 3 == 1:
@@ -588,11 +614,11 @@ class Firework_Color(EffectAlgorithm):
             self.pitted = not self.pitted
 
         if self.pitted:
-            for i in range(4):
+            for i in range(FLOUNGE_STRIP):
                 for l in range(self.string_len):
                     self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(0, 0, self.color_matrix[l][i])
         else:
-            for i in range(4):
+            for i in range(FLOUNGE_STRIP):
                 color = rd.random()
                 for l in range(self.string_len):
                     self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(color, 1, 1)
@@ -606,8 +632,8 @@ class Rainbow_Vomit(EffectAlgorithm):
             initial_hex_vals[i] = utils.hsv_to_hex(self.color, 0, 0)
         super().__init__(bpm, nlights, initial_hex_vals)
         self.count = 0
-        self.string_len = nlights//4
-        self.color_matrix = np.zeros((self.string_len, 4))
+        self.string_len = nlights//FLOUNGE_STRIP
+        self.color_matrix = np.zeros((self.string_len, FLOUNGE_STRIP))
         self.pitted = 1
         for i in range(4):
             for l in range(self.string_len):
@@ -621,7 +647,7 @@ class Rainbow_Vomit(EffectAlgorithm):
         if self.cur_time() - self.times[-1] >= self.period/16:
         # if True:
             self.count = self.count + 1
-            for i in range(4):
+            for i in range(FLOUNGE_STRIP):
                 mixer = rd.randint(0,2)
                 for l in range(self.string_len):
                     if (l+mixer) % 3 == 1:
@@ -637,11 +663,11 @@ class Rainbow_Vomit(EffectAlgorithm):
             self.pitted = not self.pitted
 
         if self.pitted:
-            for i in range(4):
+            for i in range(FLOUNGE_STRIP):
                 for l in range(self.string_len):
                     self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(rd.random(), 1, self.color_matrix[l][i])
         else:
-            for i in range(4):
+            for i in range(FLOUNGE_STRIP):
                 color = rd.random()
                 for l in range(self.string_len):
                     self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(color, 0, 0)

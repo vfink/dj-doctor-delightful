@@ -5,11 +5,14 @@ from peakutils.plot import plot as pplot
 import wave
 import math
 import time
+import struct
 
-from renderers.pyqt.spectrogram_widget import SpectrogramWidget
-from spectrum_analyzers.spectrum_analyzers import WindowedSTFT
+from renderers.pyqt.spectrogram_widget_single import SpectrogramWidget
+from spectrum_analyzers.spectrum_analyzers import WindowedSTFT, CQT
 
 import pyaudio
+import soundfile as sf
+
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import QObject, pyqtSlot
@@ -66,150 +69,183 @@ if __name__ == '__main__':
     bpmGuesses = []
 
     wave_path = '/Users/davidgomez/Documents/Personal/Vengaboys_-_Boom_Boom_Boom_Boom.wav'
-    nseconds = 20
+    start_delay = 20
+    nseconds = 30
     miniChunk = 128
-    wave_reader = wave.open(wave_path, 'rb')
+    #wave_reader = wave.open(wave_path, 'rb')
+    wave_reader = sf.SoundFile(wave_path, 'r')
 
-    sample_rate = wave_reader.getframerate()
+    #sample_rate = wave_reader.getframerate()
+    sample_rate = wave_reader.samplerate
+    nsamples = 4096
 
     nframes = nseconds * sample_rate
     #print('nframes:', nframes, '\n')
-    samples = wave_reader.readframes(nframes//2)
+    # samples = wave_reader.readframes(nframes//2)
+    # print(len(samples))
     # freqs = np.arange((nframes / 2) + 1, dtype=np.int32) / (nframes / sample_rate)
 
 
-
-    a = np.fromstring(samples, dtype=np.int16)
-
-
+    start_delay = int(start_delay * nsamples/sample_rate)
+    wave_reader.seek(start_delay)
     #spectrogram view
-    # wave_reader.rewind()
+    #wave_reader.rewind()
+
+    app = QtGui.QApplication([])
+
+    #spectrum_analyzer = WindowedSTFT(nsamples, sample_rate)
+    spectrum_analyzer = CQT(nsamples, sample_rate, n_octaves=7, bins_per_octave=24)
+
+    # print(nseconds)
+    # print(nseconds // (nsamples/sample_rate))
+    # print((nsamples/sample_rate))
+    capture_chunks = int(nseconds // (nsamples/sample_rate))
+    print("capture_chunks: {0}".format(capture_chunks))
+    print("len freqs: {0}".format(len(spectrum_analyzer.freqs)))
+    full_spectrum = np.zeros((len(spectrum_analyzer.freqs), capture_chunks))
+
+    for i in range(0, capture_chunks):
+        #samples = wave_reader.readframes(nsamples)
+        samples = wave_reader.read(frames = nsamples)[:,0]
+        #samples = struct.unpack("<h", samples)
+        spectrum = spectrum_analyzer.get_spectrum(samples)
+
+        full_spectrum[:,i] = spectrum
+
+    print(full_spectrum.shape)
+    spectrogram_widget = SpectrogramWidget(spectrum_analyzer, full_spectrum, 4000)
+
+    wave_reader.close()
+    wave_reader = wave.open(wave_path, 'rb')
+
+    p = pyaudio.PyAudio()
+    spectrogram_widget.stream = p.open(format=p.get_format_from_width(wave_reader.getsampwidth()),
+                channels=wave_reader.getnchannels(),
+                rate=wave_reader.getframerate(),
+                output=True)
+
+
+    spectrogram_widget.wave_reader = wave_reader
+    spectrogram_widget.wave_reader.setpos(start_delay)
+    spectrogram_widget.line_count = 0
+    # Add spectrum getter function to the widget
+    def get_spectrum():
+        spectrogram_widget.stream.write(spectrogram_widget.wave_reader.readframes(nsamples))
+        spectrogram_widget.line_count = spectrogram_widget.line_count + 1
+        return spectrogram_widget.line_count
+
+    spectrogram_widget.get_spectrum = get_spectrum
+    spectrogram_widget.update()
+    app.exec_()
+    wave_reader.close()
+    spectrogram_widget.wave_reader.close()
+
+
+    # b, freqs, output = detectBeat(a, sample_rate, miniChunk)
+    # bpm = list(freqs*60)
+    # b = list(b)
+    # first = 0
+    # last = 0
+    # for i in bpm:
+    #     if i > 75 and first == 0:
+    #         first = bpm.index(i)
+    #     if i > 270 and last == 0:
+    #         last = bpm.index(i)
+    #         break
     #
-    # app = QtGui.QApplication([])
-    # spectrogram_widget = SpectrogramWidget(spectrum_analyzer, 4000)
+    # bpm = bpm[first:last]
+    # b = b[first:last]
+    # tempo = bpm[b.index(max(b))]
+    # print(tempo)
     #
-    # # Add spectrum getter function to the widget
-    # def get_spectrum():
-    #     data = wave_reader.readframes(nframes)
+    # indexes = []
     #
-    #     if len(data) > 0:
-    #         samples = np.fromstring(data, dtype=np.int16)
-    #         print(len(samples))
-    #         return spectrum_analyzer.get_spectrum(samples)
-    #     else:
-    #         return False
+    # beatChunk = 128
+    # for i in range(0, len(output)//beatChunk):
+    #     section = output[i*beatChunk:(i*beatChunk)+beatChunk]
+    #     subpeaks = peakutils.indexes(np.asarray(section), thres=.9, min_dist=100)
+    #     for p in subpeaks:
+    #         indexes.append(p+(i*beatChunk))
     #
-    # spectrogram_widget.get_spectrum = get_spectrum
-    # spectrogram_widget.update()
-    # app.exec_()
-    # wave_reader.close()
-
-
-    b, freqs, output = detectBeat(a, sample_rate, miniChunk)
-    bpm = list(freqs*60)
-    b = list(b)
-    first = 0
-    last = 0
-    for i in bpm:
-        if i > 75 and first == 0:
-            first = bpm.index(i)
-        if i > 270 and last == 0:
-            last = bpm.index(i)
-            break
-
-    bpm = bpm[first:last]
-    b = b[first:last]
-    tempo = bpm[b.index(max(b))]
-    print(tempo)
-
-    indexes = []
-
-    beatChunk = 128
-    for i in range(0, len(output)//beatChunk):
-        section = output[i*beatChunk:(i*beatChunk)+beatChunk]
-        subpeaks = peakutils.indexes(np.asarray(section), thres=.9, min_dist=100)
-        for p in subpeaks:
-            indexes.append(p+(i*beatChunk))
-
-    #plt.figure()
-    x = np.arange(0, len(output))
-    print(indexes)
-    # pplot(x, np.asarray(output), indexes)
-    # plt.show()
-
-    samplesPerBeat = int(1/((tempo/60)*(1/sample_rate)))
-    print(samplesPerBeat)
-    # plt.figure()
-    # plt.plot(bpm, b)
-    # plt.show()
+    # #plt.figure()
+    # x = np.arange(0, len(output))
+    # print(indexes)
+    # # pplot(x, np.asarray(output), indexes)
+    # # plt.show()
     #
-    # plt.figure()
-    # plt.plot(output)
+    # samplesPerBeat = int(1/((tempo/60)*(1/sample_rate)))
+    # print(samplesPerBeat)
+    # # plt.figure()
+    # # plt.plot(bpm, b)
+    # # plt.show()
+    # #
+    # # plt.figure()
+    # # plt.plot(output)
+    # #
+    # # for i in indexes:
+    # #     plt.axvline(i, color='r')
+    # #
+    # # plt.show()
+    #
+    # start = indexes[20]*miniChunk
+    # end = start + samplesPerBeat*4
+    # #plt.figure()
+    # #plt.plot(a)
     #
     # for i in indexes:
-    #     plt.axvline(i, color='r')
+    #     if i == indexes[20]:
+    #         print(i*miniChunk)
+    #         print((i*miniChunk)+samplesPerBeat*4)
+    #         plt.axvline(i*miniChunk, color='g')
+    #         plt.axvline((i*miniChunk)+samplesPerBeat*16, color='g')
+    #     else:
+    #         plt.axvline(i*miniChunk, color='r')
     #
+    # # plt.show()
+    # # maxCorrs = []
+    # # for i in range(1, 8):
+    # #     s1 = indexes[20]*miniChunk
+    # #     e1 = s1 + samplesPerBeat*4
+    # #     s2 = indexes[20+i]*miniChunk
+    # #     e2 = s2 + samplesPerBeat*4
+    # #     corr = np.correlate(np.asarray(a[s1:e1]), np.asarray(a[s2:e2]), 'same')
+    #
+    # #plt.figure()
+    # #plt.plot(corr)
+    # #plt.show()
+    #
+    # s1 = indexes[20]*miniChunk
+    # e1 = s1 + samplesPerBeat*4
+    #
+    # s2 = indexes[24]*miniChunk
+    # e2 = s2 + samplesPerBeat*4
+    #
+    # s3 = indexes[26]*miniChunk
+    # e3 = s3 + samplesPerBeat*4
+    #
+    # s4 = indexes[32]*miniChunk
+    # e4 = s4 + samplesPerBeat*4
+    #
+    # spectrum_analyzer = WindowedSTFT(len(a[s1:e1]), sample_rate,
+    #         logscale=False)
+    # spectrum = spectrum_analyzer.get_spectrum(a[s1:e1])
+    # spectrum2 = spectrum_analyzer.get_spectrum(a[s2:e2])
+    # spectrum3 = spectrum_analyzer.get_spectrum(a[s3:e3])
+    # spectrum4 = spectrum_analyzer.get_spectrum(a[s4:e4])
+    #
+    # peaks = peakutils.indexes(spectrum, thres=.5)
+    #
+    # for i in range(0, len(spectrum)):
+    #     if i in peaks:
+    #         pass
+    #     else:
+    #         pass
+    #         #spectrum[i] = 0
+    #
+    # x = np.arange(0, len(spectrum))
+    # plt.figure()
+    # plt.plot(x, spectrum, x, spectrum2, x, spectrum3, x, spectrum4, linewidth=1)
     # plt.show()
-
-    start = indexes[20]*miniChunk
-    end = start + samplesPerBeat*4
-    #plt.figure()
-    #plt.plot(a)
-
-    for i in indexes:
-        if i == indexes[20]:
-            print(i*miniChunk)
-            print((i*miniChunk)+samplesPerBeat*4)
-            plt.axvline(i*miniChunk, color='g')
-            plt.axvline((i*miniChunk)+samplesPerBeat*16, color='g')
-        else:
-            plt.axvline(i*miniChunk, color='r')
-
-    # plt.show()
-    # maxCorrs = []
-    # for i in range(1, 8):
-    #     s1 = indexes[20]*miniChunk
-    #     e1 = s1 + samplesPerBeat*4
-    #     s2 = indexes[20+i]*miniChunk
-    #     e2 = s2 + samplesPerBeat*4
-    #     corr = np.correlate(np.asarray(a[s1:e1]), np.asarray(a[s2:e2]), 'same')
-
-    #plt.figure()
-    #plt.plot(corr)
-    #plt.show()
-
-    s1 = indexes[20]*miniChunk
-    e1 = s1 + samplesPerBeat*4
-
-    s2 = indexes[24]*miniChunk
-    e2 = s2 + samplesPerBeat*4
-
-    s3 = indexes[26]*miniChunk
-    e3 = s3 + samplesPerBeat*4
-
-    s4 = indexes[32]*miniChunk
-    e4 = s4 + samplesPerBeat*4
-
-    spectrum_analyzer = WindowedSTFT(len(a[s1:e1]), sample_rate,
-            logscale=False)
-    spectrum = spectrum_analyzer.get_spectrum(a[s1:e1])
-    spectrum2 = spectrum_analyzer.get_spectrum(a[s2:e2])
-    spectrum3 = spectrum_analyzer.get_spectrum(a[s3:e3])
-    spectrum4 = spectrum_analyzer.get_spectrum(a[s4:e4])
-
-    peaks = peakutils.indexes(spectrum, thres=.5)
-
-    for i in range(0, len(spectrum)):
-        if i in peaks:
-            pass
-        else:
-            pass
-            #spectrum[i] = 0
-
-    x = np.arange(0, len(spectrum))
-    plt.figure()
-    plt.plot(x, spectrum, x, spectrum2, x, spectrum3, x, spectrum4, linewidth=1)
-    plt.show()
 
 
 
