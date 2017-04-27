@@ -130,3 +130,11 @@ def gen_note_freqs(start=24, end=96):
         notes.append(note)
 
     return notes
+
+#takes a BPM and outputs the seconds between beats
+def bpm_to_period(bpm):
+    return (1/bpm)*60
+
+#takes a sample rate and nsamples and returns seconds between samples
+def samples_to_period(sample_rate, nsamples):
+    return nsamples/sample_rate

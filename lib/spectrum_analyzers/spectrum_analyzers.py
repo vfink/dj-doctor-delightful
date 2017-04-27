@@ -43,6 +43,13 @@ class CQT(SpectrumAnalyzerABC):
                                             bins_per_octave=self.bins_per_octave,
                                             fmin=librosa.note_to_hz('C1'))
         assert self.nsamples % (2 ** self.n_octaves) == 0
+        self.freq_dict = {}
+        count = 0
+        for i in self.freqs:
+            self.freq_dict[count] = i
+            self.freq_dict[i] = count
+            count = count + 1
+
 
     def get_spectrum(self, x):
         # print("len(x):", len(x))
