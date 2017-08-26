@@ -1,13 +1,28 @@
 import colorsys
+import wave
 
 import numpy as np
 import pyqtgraph as pg
+
+
+def read_wave(wave_path, nseconds):
+
+    wave_reader = wave.open(wave_path, 'rb')
+    sample_rate = wave_reader.getframerate()
+    nchannels = wave_reader.getnchannels()
+    nframes = nseconds * sample_rate
+
+    samples = wave_reader.readframes(nframes)
+    a = np.fromstring(samples, dtype=np.int16)
+    a = a[::nchannels]
+    return a, sample_rate
 
 
 def get_pyqt_cmap(numpy_cmap):
     rgb = np.round(np.array(numpy_cmap.colors) * 256).astype(dtype=np.ubyte)
     stops = np.linspace(0, 1, len(rgb))
     return pg.ColorMap(stops, rgb)
+
 
 class CircularBuffer(object):
     def __init__(self, n, dtype=float):
@@ -115,3 +130,11 @@ def gen_note_freqs(start=24, end=96):
         notes.append(note)
 
     return notes
+
+#takes a BPM and outputs the seconds between beats
+def bpm_to_period(bpm):
+    return (1/bpm)*60
+
+#takes a sample rate and nsamples and returns seconds between samples
+def samples_to_period(sample_rate, nsamples):
+    return nsamples/sample_rate

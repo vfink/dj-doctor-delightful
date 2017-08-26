@@ -62,6 +62,30 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
 
         return final_hex_vals
 
+    def pick_dtyd_algorithm(self, alg_list):
+        #this is not a good function, i am hardcoding based on current alg names
+        found = False
+        while (found is False):
+            result = alg_list[rd.randint(0, len(alg_list)-1)]
+            if (result!=self.current_algorithm):
+                #check for similar algs
+                if (self.current_algorithm==Merge_Left_Rainbow and result==Merge_Right_Rainbow):
+                    pass
+                elif (self.current_algorithm==Merge_Right_Rainbow and result==Merge_Left_Rainbow):
+                    pass
+                elif (self.current_algorithm==Merge_Left_Bomber and result==Merge_Right_Bomber):
+                    pass
+                elif (self.current_algorithm==Merge_Right_Bomber and result==Merge_Left_Bomber):
+                    pass
+                elif (self.current_algorithm==Firework and result==Firework_Color):
+                    pass
+                elif (self.current_algorithm==Firework_Color and result==Firework):
+                    pass
+                else:
+                    #print("new alg: ", result)
+                    found = True
+                    return result
+
     def freq_to_hex(self, freq):
 
         power = np.sum(20*np.log10(freq))
@@ -152,17 +176,20 @@ class Visualizer(vis_alg_base.VisualizationAlgorithm):
         for i in range(0, len(self.power_buffer)):
             if i not in subpeaks:
                 butts[i] = 0
+        #
+        # if sum(butts[0:2]) > 0:
+            #print('kapow')
+
+
+
 
         if sum(butts[0:2]) > 0:
-            print('kapow')
-
-
-
-        if sum(butts[0:2]) > 0:
+            print("beat")
             if self.current_algorithm.done and self.algo_beats > 8:
                 self.algo_beats = 1
-                #print('boom')
-                self.current_algorithm = ALGORITHM_LIST[rd.randint(0, len(ALGORITHM_LIST)-1)](self.bpm, self.nlights, self.hex_vals)
+                print('boom')
+                self.log_time()
+                self.current_algorithm = self.pick_dtyd_algorithm(ALGORITHM_LIST)(self.bpm, self.nlights, self.hex_vals)
                 # self.current_algorithm = ALGORITHM_LIST[3](self.bpm, self.nlights, self.hex_vals)
                 print(type(self.current_algorithm))
 

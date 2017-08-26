@@ -120,7 +120,7 @@ class Gradient_Sweep(EffectAlgorithm):
     def update(self):
         #print(self.shift)
         #print('FUCK')
-        if self.cur_time() - self.times[-1] >= self.period/4:
+        if self.cur_time() - self.times[-1] >= self.period/8:
         # if True:
             self.log_time()
 
@@ -235,7 +235,7 @@ def bomber(num_leds):
             white = utils.hsv_to_hex(0, 0, .1)
             num_array += [white] * 4
         else:
-            color = utils.hsv_to_hex(.13, 1, 1)
+            color = utils.hsv_to_hex(.07, 1, 1)
             num_array += [color] * 4
     return num_array
 
@@ -257,22 +257,31 @@ def rainbow(num_leds):
         num_array += [color] * 4
     return num_array
 
+def every_other(num_leds):
+    num_array = []
+    for num in range(num_leds):
+        if num% 2:
+            white = utils.hsv_to_hex(0, 0, .1)
+            num_array += [white]
+        else:
+            color = utils.hsv_to_hex(.07, 1, 1)
+            num_array += [color]
+    return num_array
+
 class Switch_Left(EffectAlgorithm):
 
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, initial_hex_vals)
-        self.count = 0
+        self.count = 1
         self.string_len = nlights // 4
-        self.update_range1 = np.arange(self.count * self.string_len,
-                                       (self.count * self.string_len) + self.string_len // 2)
-        self.update_range2 = np.arange(self.count * self.string_len + self.string_len // 2,
-                                       (self.count * self.string_len) + self.string_len)
+        self.update_range1 = np.arange(0 , self.string_len // 2)
+        self.update_range2 = np.arange(self.string_len // 2, self.string_len)
         self.color1 = rd.random()
         self.color2 = rd.random()
 
     def update(self):
         if self.cur_time() - self.times[-1] >= self.period:
-            if self.count >= 8:
+            if self.count >= 4:
                 self.done = 1
                 self.count = 0
                 self.color = rd.random()
@@ -286,28 +295,26 @@ class Switch_Left(EffectAlgorithm):
 
             self.log_time()
 
-            new_color = self.color1.copy()
-            self.color1 = self.color2.copy()
+            new_color = self.color1
+            self.color1 = self.color2
             self.color2 = new_color
 
         for i in self.update_range1:
             self.final_hex_vals[i] = (utils.hsv_to_hex(self.color1, 1, 1))
-        for i in self.update_range1:
+        for i in self.update_range2:
             self.final_hex_vals[i] = (utils.hsv_to_hex(self.color2, 1, 1))
 
-        if self.count == 8:
+        if self.count == 4:
             self.done = 1
         return self.final_hex_vals
 
 class Switch_Right(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, initial_hex_vals)
-        self.count = 3
-        self.string_len = nlights//4
-        self.update_range1 = np.arange(self.count * self.string_len,
-                                       (self.count * self.string_len) + self.string_len // 2)
-        self.update_range2 = np.arange(self.count * self.string_len + self.string_len // 2,
-                                       (self.count * self.string_len) + self.string_len)
+        self.count = 2
+        self.string_len = nlights // 4
+        self.update_range1 = np.arange(0 , self.string_len // 2)
+        self.update_range2 = np.arange(self.string_len // 2, self.string_len)
         self.color1 = rd.random()
         self.color2 = rd.random()
 
@@ -327,13 +334,13 @@ class Switch_Right(EffectAlgorithm):
 
             self.log_time()
 
-            new_color = self.color1.copy()
-            self.color1 = self.color2.copy()
+            new_color = self.color1
+            self.color1 = self.color2
             self.color2 = new_color
 
         for i in self.update_range1:
             self.final_hex_vals[i] = (utils.hsv_to_hex(self.color1, 1, 1))
-        for i in self.update_range1:
+        for i in self.update_range2:
             self.final_hex_vals[i] = (utils.hsv_to_hex(self.color2, 1, 1))
 
         if self.count == -1:
@@ -360,13 +367,14 @@ class Merge_Left_Bomber(EffectAlgorithm):
 
             self.log_time()
 
-        if self.measure_count == 2:
+        if self.measure_count == 1:
             self.done = 1
         return self.final_hex_vals
 
 class Merge_Left_Spectrum(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, color_spectrum(nlights))
+        self.string_len = nlights//8
         self.count = 0
         self.measure_count = 0
 
@@ -376,12 +384,12 @@ class Merge_Left_Spectrum(EffectAlgorithm):
                 self.count = 0
                 self.measure_count += 1
 
-            self.final_hex_vals = np.roll(self.final_hex_vals,4)
+            self.final_hex_vals = np.roll(self.final_hex_vals,(self.string_len//2))
             self.count = self.count + 1
 
             self.log_time()
 
-        if self.measure_count == 2:
+        if self.measure_count == 1:
             self.done = 1
         return self.final_hex_vals
 
@@ -402,13 +410,14 @@ class Merge_Right_Bomber(EffectAlgorithm):
 
             self.log_time()
 
-        if self.measure_count == 2:
+        if self.measure_count == 1:
             self.done = 1
         return self.final_hex_vals
 
 class Merge_Right_Spectrum(EffectAlgorithm):
     def __init__(self, bpm, nlights, initial_hex_vals):
         super().__init__(bpm, nlights, color_spectrum(nlights))
+        self.string_len = nlights//4
         self.count = 0
         self.measure_count = 0
 
@@ -418,12 +427,12 @@ class Merge_Right_Spectrum(EffectAlgorithm):
                 self.count = 0
                 self.measure_count += 1
 
-            self.final_hex_vals = np.roll(self.final_hex_vals,-4)
+            self.final_hex_vals = np.roll(self.final_hex_vals,-(self.string_len//2))
             self.count = self.count + 1
 
             self.log_time()
 
-        if self.measure_count == 2:
+        if self.measure_count == 1:
             self.done = 1
         return self.final_hex_vals
 
@@ -444,7 +453,7 @@ class Merge_Right_Rainbow(EffectAlgorithm):
 
             self.log_time()
 
-        if self.measure_count == 2:
+        if self.measure_count == 1:
             self.done = 1
         return self.final_hex_vals
 
@@ -468,11 +477,180 @@ class Merge_Left_Rainbow(EffectAlgorithm):
 
             self.log_time()
 
-        if self.measure_count == 2:
+        if self.measure_count == 1:
             self.done = 1
+        return self.final_hex_vals
+
+class AC_Current(EffectAlgorithm):
+    def __init__(self, bpm, nlights, initial_hex_vals):
+        super().__init__(bpm, nlights, every_other(nlights))
+        self.count = 0
+        self.measure_count = 0
+
+    def update(self):
+        if self.cur_time() - self.times[-1] >= self.period/4:
+            if self.count >= 4:
+                self.count = 0
+                self.measure_count += 1
+
+            self.final_hex_vals = np.roll(self.final_hex_vals,1)
+            self.count = self.count + 1
+
+            self.log_time()
+
+        if self.measure_count == 1:
+            self.done = 1
+        return self.final_hex_vals
+
+class Firework(EffectAlgorithm):
+    def __init__(self, bpm, nlights, initial_hex_vals):
+        self.color = rd.random()
+        for i in range(len(initial_hex_vals)):
+            initial_hex_vals[i] = utils.hsv_to_hex(self.color, 0, 0)
+        super().__init__(bpm, nlights, initial_hex_vals)
+        self.count = 0
+        self.string_len = nlights//4
+        self.color_matrix = np.zeros((self.string_len, 4))
+        self.pitted = 1
+        for i in range(4):
+            for l in range(self.string_len):
+                if l % 3 == 1:
+                    tmp = 1
+                else:
+                    tmp = 0
+                self.color_matrix[l][i] = tmp
+
+    def update(self):
+        if self.cur_time() - self.times[-1] >= self.period/16:
+        # if True:
+            self.count = self.count + 1
+            for i in range(4):
+                mixer = rd.randint(0,2)
+                for l in range(self.string_len):
+                    if (l+mixer) % 3 == 1:
+                        tmp = 1
+                    else:
+                        tmp = 0
+                    self.color_matrix[l][i] = tmp
+            if self.count >= 8:
+                self.done = 1
+                self.count = 0
+
+            self.log_time()
+            self.pitted = not self.pitted
+
+        if self.pitted:
+            for i in range(4):
+                for l in range(self.string_len):
+                    self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(0, 0, self.color_matrix[l][i])
+        else:
+            for i in range(4):
+                for l in range(self.string_len):
+                    self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(0, 0, 0)
+
+        return self.final_hex_vals
+
+class Firework_Color(EffectAlgorithm):
+    def __init__(self, bpm, nlights, initial_hex_vals):
+        self.color = rd.random()
+        for i in range(len(initial_hex_vals)):
+            initial_hex_vals[i] = utils.hsv_to_hex(self.color, 0, 0)
+        super().__init__(bpm, nlights, initial_hex_vals)
+        self.count = 0
+        self.string_len = nlights//4
+        self.color_matrix = np.zeros((self.string_len, 4))
+        self.pitted = 1
+        for i in range(4):
+            for l in range(self.string_len):
+                if l % 3 == 1:
+                    tmp = 1
+                else:
+                    tmp = 0
+                self.color_matrix[l][i] = tmp
+
+    def update(self):
+        if self.cur_time() - self.times[-1] >= self.period/16:
+        # if True:
+            self.count = self.count + 1
+            for i in range(4):
+                mixer = rd.randint(0,2)
+                for l in range(self.string_len):
+                    if (l+mixer) % 3 == 1:
+                        tmp = 1
+                    else:
+                        tmp = 0
+                    self.color_matrix[l][i] = tmp
+            if self.count >= 8:
+                self.done = 1
+                self.count = 0
+
+            self.log_time()
+            self.pitted = not self.pitted
+
+        if self.pitted:
+            for i in range(4):
+                for l in range(self.string_len):
+                    self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(0, 0, self.color_matrix[l][i])
+        else:
+            for i in range(4):
+                color = rd.random()
+                for l in range(self.string_len):
+                    self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(color, 1, 1)
+
+        return self.final_hex_vals
+
+class Rainbow_Vomit(EffectAlgorithm):
+    def __init__(self, bpm, nlights, initial_hex_vals):
+        self.color = rd.random()
+        for i in range(len(initial_hex_vals)):
+            initial_hex_vals[i] = utils.hsv_to_hex(self.color, 0, 0)
+        super().__init__(bpm, nlights, initial_hex_vals)
+        self.count = 0
+        self.string_len = nlights//4
+        self.color_matrix = np.zeros((self.string_len, 4))
+        self.pitted = 1
+        for i in range(4):
+            for l in range(self.string_len):
+                if l % 3 == 1:
+                    tmp = 1
+                else:
+                    tmp = 0
+                self.color_matrix[l][i] = tmp
+
+    def update(self):
+        if self.cur_time() - self.times[-1] >= self.period/16:
+        # if True:
+            self.count = self.count + 1
+            for i in range(4):
+                mixer = rd.randint(0,2)
+                for l in range(self.string_len):
+                    if (l+mixer) % 3 == 1:
+                        tmp = 1
+                    else:
+                        tmp = 0
+                    self.color_matrix[l][i] = tmp
+            if self.count >= 8:
+                self.done = 1
+                self.count = 0
+
+            self.log_time()
+            self.pitted = not self.pitted
+
+        if self.pitted:
+            for i in range(4):
+                for l in range(self.string_len):
+                    self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(rd.random(), 1, self.color_matrix[l][i])
+        else:
+            for i in range(4):
+                color = rd.random()
+                for l in range(self.string_len):
+                    self.final_hex_vals[update_string(l, i, self.string_len)] = utils.hsv_to_hex(color, 0, 0)
+
         return self.final_hex_vals
 
 
 
-ALGORITHM_LIST = [Sweep_Left, Sweep_Right, Gradient_Sweep, Chase_Down, Merge_Left_Spectrum, Merge_Left_Bomber,
-                  Merge_Right_Spectrum,Merge_Right_Bomber,Switch_Left,Switch_Right, Merge_Right_Rainbow, Merge_Left_Rainbow]
+ALGORITHM_LIST = [Sweep_Left, Sweep_Right, Gradient_Sweep, Chase_Down,
+                    Merge_Left_Spectrum, Merge_Left_Bomber, Merge_Right_Spectrum,
+                    Merge_Right_Bomber,Switch_Left,Switch_Right, Merge_Right_Rainbow,
+                    Merge_Left_Rainbow, AC_Current, Firework, Firework_Color, Rainbow_Vomit]
